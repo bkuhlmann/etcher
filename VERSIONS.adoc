@@ -1,0 +1,17 @@
+= Versions
+
+== 0.0.0 (2023-04-23)
+
+* Added JSON loader - Brooke Kuhlmann
+* Added RSpec Dry Monads and Schema configuration - Brooke Kuhlmann
+* Added YAML loader - Brooke Kuhlmann
+* Added builder - Brooke Kuhlmann
+* Added contract - Brooke Kuhlmann
+* Added default logger - Brooke Kuhlmann
+* Added documentation - Brooke Kuhlmann
+* Added environment loader - Brooke Kuhlmann
+* Added gem dependencies - Brooke Kuhlmann
+* Added primary interface - Brooke Kuhlmann
+* Added project skeleton - Brooke Kuhlmann
+* Added registry - Brooke Kuhlmann
+* Added resolver - Brooke Kuhlmann
