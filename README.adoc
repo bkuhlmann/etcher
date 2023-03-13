@@ -2,13 +2,41 @@
 :toclevels: 5
 :figure-caption!:
 
+:data_link: link:https://alchemists.io/articles/ruby_data[Data]
+:demeter_link: link:https://en.wikipedia.org/wiki/Law_of_Demeter[Law of Demeter]
+:dry_container_link: link:https://dry-rb.org/gems/dry-container[Dry Container]
+:dry_monads_link: link:https://dry-rb.org/gems/dry-monads[Dry Monads]
+:dry_schema_link: link:https://dry-rb.org/gems/dry-schema[Dry Schema]
+:dry_validation_link: link:https://dry-rb.org/gems/dry-validation[Dry Validation]
+:environment_link: link:https://rubyapi.org/3.2/o/env[Environment]
+:gitt_link: link:https://alchemists.io/projects/gitt[Gitt]
+:hash_link: link:https://rubyapi.org/o/hash[Hash]
+:json_link: link:https://rubyapi.org/o/json[JSON]
+:runcom_link: link:https://alchemists.io/projects/runcom[Runcom]
+:struct_link: link:https://alchemists.io/articles/ruby_structs[Struct]
+:transactable_link: link:https://alchemists.io/projects/transactable[Transactable]
+:xdg_link: link:https://alchemists.io/projects/xdg[XDG]
+:yaml_link: link:https://rubyapi.org/o/yaml[YAML]
+
 = Etcher
+
+Etcher allows you to take raw settings and/or user input and _etch_ them into a concrete and valid configuration for use within your application. As quoted from link:https://en.wikipedia.org/wiki/Etching[Wikipedia], to _etch_ is to:
+
+____
+[Use] strong acid or mordant to cut into the unprotected parts of a metal surface to create a design in intaglio (incised) in the metal.
+____
+
+By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and turned into records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application. In other words, the ability to take primitive hashes and _etch_ them into a _frozen_ record with a nice interface that doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Finally, this pairs well with the {xdg_link} and {runcom_link} gems, Command Line Interfaces (CLIs), Application Programming Interfaces (APIs), or any application that can be configured by the user.
 
 toc::[]
 
 == Features
 
-== Screencasts
+* Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. This works extremely well with the {dry_schema_link} and {dry_validation_link} gems.
+* Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. This works extremely well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
+* Supports loading of default configurations from the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
+* Supports multiple transformations which can process loaded configuration hashes and answer a transformed hash.
+* Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLI) or anything that might require user input at runtime.
 
 == Requirements
 
@@ -16,14 +44,419 @@ toc::[]
 
 == Setup
 
-To set up the project, run:
+To install _with_ security, run:
 
 [source,bash]
 ----
-bin/setup
+# 💡 Skip this line if you already have the public certificate installed.
+gem cert --add <(curl --compressed --location https://alchemists.io/gems.pem)
+gem install etcher --trust-policy HighSecurity
+----
+
+To install _without_ security, run:
+
+[source,bash]
+----
+gem install etcher
+----
+
+You can also add the gem directly to your project:
+
+[source,bash]
+----
+bundle add etcher
+----
+
+Once the gem is installed, you only need to require it:
+
+[source,ruby]
+----
+require "etcher"
 ----
 
 == Usage
+
+Basic usage is to new up an instance:
+
+[source,ruby]
+----
+etcher = Etcher.new
+etcher.call({one: 1, two: 2})
+
+# Success({:one=>1, :two=>2})
+----
+
+Notice you get a monad -- either a `Success` or `Failure` -- as provided by the {dry_monads_link} gem. This allows you to create more sophisticated pipelines as found with the {transactable_link} gem or any kind of failsafe workflow you might need. The only problem is -- by default -- any attributes you message the instance with will only pass through what you gave it and always answer a `Success`. This is nice for initial experimentation but true power comes with full customization of the instance. Here's an advanced configuration showing all features:
+
+[source,ruby]
+----
+require "dry/monads"
+require "dry/schema"
+
+Dry::Schema.load_extensions :monads
+
+contract = Dry::Schema.Params do
+  required(:user).filled :string
+  required(:home).filled :string
+end
+
+model = Data.define :user, :home
+transformer = -> content { Dry::Monads::Success content.merge! user: content[:user].upcase }
+
+Etcher::Registry.new(contract:, model:, transformers: [transformer])
+                .add_loader(Etcher::Loaders::Environment.new(%w[USER HOME]))
+                .then { |registry| Etcher.new(registry).call }
+
+# Success(#<data user="DEMO", home="/Users/demo">)
+----
+
+The above can be broken down into a series of steps:
+
+. A {dry_schema_link} contract -- loaded with {dry_monads_link} extensions -- is created to verify untrusted attributes.
+. A model is created with attributes: `user` and `home`.
+. A registry is constructed with a custom contract, model, loader, and transformer.
+. Finally, we see a _successfully_ built configuration for further use.
+
+While this is a more advanced use case, you'll usually only need to register a contract and model. The loaders and transformers provide additional firepower in situations where you need to do more with your data. We'll look at each of these components in greater detail next.
+
+=== Registry
+
+The registry is provided as a way to register any/all complexity for before creating a new Etcher instance. Here's what you get by default:
+
+[source,ruby]
+----
+Etcher::Registry.new
+# #<data Etcher::Registry contract=#<Proc:0x000000010e393550 contract.rb:7 (lambda)>, model=Hash, loaders=[], transformers=[]>
+----
+
+Since the registry is a {data_link}, you can initialize with everything you need:
+
+[source,ruby]
+----
+Etcher::Registry[
+  contract: MyContract,
+  model: MyModel,
+  loaders: [MyLoader.new],
+  transformers: [MyTransformer]
+]
+----
+
+You can also add additional loaders and/or transformers after the fact:
+
+[source,ruby]
+----
+registry = Etcher::Registry.new
+                           .add_loader(MyLoader.new)
+                           .add_transformer(MyTransformer)
+----
+
+💡 Order matters so ensure you list your loaders and transformers in the order you want them to be processed.
+
+=== Contracts
+
+Contracts are critical piece of this workflow as they provide a way to validate incoming data, strip out unwanted data, and create a sanitized record for use in your application. Any contract that has the following behavior will work:
+
+* `#call`: Must be able to consume a {hash_link} and answer an object which can respond to `#to_monad`.
+
+The best gems which adhere to this interface are: {dry_schema_link} and {dry_validation_link}. You'll also want to make sure the {dry_monads_link} extensions are loaded as briefly shown earlier so the result will respond to `#to_monad`. Here's how to enable monad support if using both gems:
+
+[source,ruby]
+----
+Dry::Schema.load_extensions :monads
+Dry::Validation.load_extensions :monads
+----
+
+Using {dry_schema_link} syntax, we could create a contract for verifying email addresses and use it to build a new Etcher instance. Example:
+
+[source,ruby]
+----
+require "dry/schema"
+
+Dry::Schema.load_extensions :monads
+
+contract = Dry::Schema.Params do
+  required(:from).filled :string
+  required(:to).filled :string
+end
+
+etcher = Etcher::Registry[contract:].then { |registry| Etcher.new registry }
+etcher.call
+
+# Failure({:step=>:validate, :payload=>{:from=>["is missing"], :to=>["is missing"]}})
+
+etcher.call from: "Mork", to: "Mindy"
+# Success({:from=>"Mork", :to=>"Mindy"})
+----
+
+Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record and it would be nice to structured model which which we'll look at next.
+
+=== Models
+
+A model is any object which responds to `.[]` and can accept a splatted hash. Example: `Model[**attributes]`. These primitives are excellent choices: {hash_link}, {data_link}, and {struct_link}.
+
+ℹ️ Keep in mind that using a `Hash` is the default model and will only result in a pass through situation. You'll want to reach for the more robust `Data` or `Struct` objects instead.
+
+The model is used in the last step of the _etching_ process to create a _frozen_ record for further use by your application. Here's an example where a {data_link} model is used:
+
+[source,ruby]
+----
+model = Data.define :from, :to
+etcher = Etcher::Registry[model:].then { |registry| Etcher.new registry }
+
+etcher.call
+# Failure({:step=>:record, :payload=>"Missing keywords: :from, :to."})
+
+etcher.call from: "Mork", to: "Mindy"
+# Success(#<data Model from="Mork", to="Mindy">)
+----
+
+Notice we get an failure if all attributes are not provided but if we supply the required attributes we get a success.
+
+ℹ️ Keep in mind the default contract is always a pass through so no validation is being done when only using a {hash_link}. Generally you want to supply both a custom contract and model at a minimum.
+
+=== Loaders
+
+Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. There are a few guidelines to using them:
+
+* They must respond to `#call` with no arguments.
+* All keys are symbolized which helps streamline merging and overriding values from the same keys across multiple configurations.
+* All nested keys will be flattened after being loaded. This means a key structure of `{demo: {one: "test"}}` will be flattened to `demo_one: "test"` which adheres to the {demeter_link} when a new recored is _etched_ for you.
+* The order in which you define your loaders matters. This means the first loader defined will be processed first, then the second, and so forth. Loaders defined last take precedence over loaders defined first when overriding the same keys.
+
+The next couple of sections will help you learn about the supported loaders and how to build your own custom loader.
+
+==== Environment
+
+Use `Etcher::Loaders::Environment` to load configuration information from your {environment_link}. By default, this object wraps `ENV`, uses an empty array for keys to include, and answers a filtered hash where all keys are downcased. _If you don't specify keys to include, then an empty hash is answered back_. Here's a few examples:
+
+[source,ruby]
+----
+# Default behavior.
+loader = Etcher::Loaders::Environment.new
+loader.call
+# Success({})
+
+# With specific includes.
+loader = Etcher::Loaders::Environment.new %w[RACK_ENV DATABASE_URL]
+loader.call
+# Success({"rack_env" => "test", "database_url" => "postgres://localhost/demo_test"})
+
+# With a custom environment and specific include.
+loader = Etcher::Loaders::Environment.new "USER", source: {"USER" => "Jack"}
+loader.call
+# Success({"user"=>"Jack"})
+----
+
+This loader is great for pulling from environment variables as a fallback configuration for your application.
+
+==== JSON
+
+Use `Etcher::Loaders::JSON` to load configuration information from a {json_link} file. Here's how to use this loader (using a file that doesn't exist):
+
+[source,ruby]
+----
+# Default behavior (a custom path is required).
+loader = Etcher::Loaders::JSON.new "your/path/to/configuration.json"
+loader.call  # Success({})
+----
+
+You can also customize the fallback and logger used. Here are the defaults:
+
+[source,ruby]
+----
+loader = Etcher::Loaders::JSON.new "your/path/to/configuration.json",
+                                   fallback: {},
+                                   logger: Logger.new(STDOUT)
+loader.call  # Success({})
+----
+
+If the file did exist and had content, you'd get a `Success` with a `Hash` of the contents.
+
+ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
+
+==== YAML
+
+Use `Etcher::Loaders::YAML` to load configuration information from a {yaml_link} file. Here's how to use this loader (using a file that doesn't exist):
+
+[source,ruby]
+----
+# Default behavior (a custom path is required).
+loader = Etcher::Loaders::YAML.new "your/path/to/configuration.yml"
+loader.call  # Success({})
+----
+
+You can also customize the fallback and logger used. Here are the defaults:
+
+[source,ruby]
+----
+loader = Etcher::Loaders::YAML.new "your/path/to/configuration.yml",
+                                   fallback: {},
+                                   logger: Logger.new(STDOUT)
+loader.call  # Success({})
+----
+
+If the file did exist and had content, you'd get a `Success` with a `Hash` of the contents.
+
+ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
+
+==== Custom
+
+You can always create your own loader if you don't need or want any of the default loaders provided for you. The only requirement is your loader _must_ respond to `#call` and answer a `Success` with a `Hash` for content which means you can use a class, method, lambda, or proc. Here's an example of creating a custom loader, registering, and using it:
+
+[source,ruby]
+----
+require "dry/monads"
+
+class Demo
+  include Dry::Monads[:result]
+
+  def initialize fallback: {}
+    @fallback = fallback
+  end
+
+  def call = Success fallback
+
+  private
+
+  attr_reader :fallback
+end
+
+etcher = Etcher::Registry[loaders: [Demo.new]].then { |registry| Etcher.new registry }
+etcher.call  # Success({})
+----
+
+While the above isn't super useful since it only answers whatever you provide as fallback information, you can see there is little effort required to implement and customize as desired.
+
+=== Transformers
+
+Transformers are great for modifying specific keys and values. They give you finer grained control over your configuration and are the last step before validating and creating an associated record of your configuration. There are a few guidelines to using them:
+
+* They can be initialized with whatever requirements you might need.
+* They must respond to `#call` which takes a single argument (i.e. `content`) and answers a modified representation of this content as a `Success` with a `Hash` for content.
+
+Here are a few examples of where you could go with this:
+
+The following capitalizes all values (which may or may not be good depending on your data structure).
+
+[source,ruby]
+----
+require "dry/monads"
+
+Capitalize = -> content { Dry::Monads::Success content.transform_values!(&:capitalize) }
+Capitalize.call(name: "test")
+
+# Success({:name=>"Test"})
+----
+
+The following updates current time relative to when configuration was transformed.
+
+[source,ruby]
+----
+require "dry/monads"
+
+CurrentTime = lambda do |content, at: Time.now|
+  content[:at] = at
+  Dry::Monads::Success content
+end
+
+CurrentTime.call({})
+
+# Success({:at=>2023-04-23 15:22:23.746408 -0600})
+----
+
+The following obtains the current Git user's email address from the global Git configuration using the {gitt_link} gem.
+
+[source,ruby]
+----
+require "dry/monads"
+require "gitt"
+
+class GitEmail
+  def initialize git: Gitt::Repository.new
+    @git = git
+  end
+
+  def call(content) = git.get("user.email").fmap { |email| content[:author_email] = email }
+
+  private
+
+  attr_reader :git
+end
+
+GitEmail.new.call({})
+
+# Success("demo@alchemists.io")
+----
+
+To use all of the above, you'd only need to register and use them:
+
+[source,ruby]
+----
+registry = Etcher::Registry[transformers: [Capitalize, CurrentTime, GitEmail.new]]
+etcher = Etcher.new(registry)
+etcher.call
+----
+
+=== Overrides
+
+Overrides are what you pass to the Etcher instance when called. Example:
+
+[source,ruby]
+----
+etcher = Etcher.new
+etcher.call name: "test", label: "Test"
+
+# Success({:name=>"test", :label=>"Test"})
+----
+
+These _overrides_ are applied _after_ all loaders are processed and _before_ any transformations. They are a nice way to deal with user input during runtime or provide any additional configuration not supplied by the loading of your default configuration.
+
+=== Resolver
+
+In situations where you'd like Etcher to handle the complete load, transform, validate, and build steps for you, then you can use the resolver. This is provided for use cases where you'd like Etcher to handle everything for you and abort if otherwise. Example:
+
+[source,ruby]
+----
+Etcher.call name: "demo"
+# {:name=>"demo"}
+----
+
+When called _and there are no issues_, you'll get the fully formed record as a result (in this case a Hash which is the default model). You'll never a get a monad when using `Etcher.call` because this is meant to resolve the monadic pipeline for you. If any failure is encountered, then Etcher will _abort_ with a fatal log message. Here's a variation of earlier examples which demonstrates fatal errors:
+
+[source,ruby]
+----
+require "dry/monads"
+require "dry/schema"
+
+Dry::Schema.load_extensions :monads
+
+contract = Dry::Schema.Params do
+  required(:to).filled :string
+  required(:from).filled :string
+end
+
+model = Data.define :to, :from
+registry = Etcher::Registry.new(contract:, model:)
+
+Etcher.call registry
+
+# 🔥 Unable to load configuration due to the following issues:
+#   - to is missing
+#   - from is missing
+
+Etcher.call registry, to: "Mindy"
+
+# 🔥 Unable to load configuration due to the following issues:
+#   - from is missing
+
+
+registry = Etcher::Registry.new(model: Data.define(:name, :label))
+Etcher.call registry, to: "Mindy"
+
+# 🔥 Build failure: :record. Missing keywords: :name, :label.
+----
+
+💡 When using a custom registry, make sure it's the first argument. All arguments afterwards can be any number of key/values overrides which is similar to how `Etcher.new` works.
 
 == Development
 
@@ -42,6 +475,12 @@ You can also use the IRB console for direct access to all objects:
 ----
 bin/console
 ----
+
+=== Architecture
+
+The following illustrates the full sequences of events when _etching_ new records:
+
+image::https://alchemists.io/images/projects/etcher/doc/architecture.svg[Architecture Diagram]
 
 == Tests
 
