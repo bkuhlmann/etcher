@@ -4,7 +4,7 @@ require "cogger"
 require "zeitwerk"
 
 Zeitwerk::Loader.for_gem.then do |loader|
-  loader.inflector.inflect "json" => "JSON"
+  loader.inflector.inflect "json" => "JSON", "yaml" => "YAML"
   loader.setup
 end
 
