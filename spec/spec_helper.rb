@@ -14,6 +14,8 @@ unless ENV["NO_COVERAGE"]
   end
 end
 
+require "dry/monads"
+require "dry/schema"
 require "etcher"
 require "refinements"
 require "tone/rspec/matchers/have_color"
@@ -43,4 +45,6 @@ RSpec.configure do |config|
     mocks.verify_doubled_constant_names = true
     mocks.verify_partial_doubles = true
   end
+
+  config.before(:suite) { Dry::Schema.load_extensions :monads }
 end
