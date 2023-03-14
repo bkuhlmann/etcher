@@ -11,4 +11,8 @@ end
 # Main namespace.
 module Etcher
   LOGGER = Cogger.new id: :etcher, formatter: :emoji
+
+  def self.new(...) = Builder.new(...)
+
+  def self.call(registry = Registry.new, **) = Resolver.new(registry).call(**)
 end
