@@ -2,11 +2,11 @@
 
 Gem::Specification.new do |spec|
   spec.name = "etcher"
-  spec.version = "0.0.0"
+  spec.version = "0.1.0"
   spec.authors = ["Brooke Kuhlmann"]
   spec.email = ["brooke@alchemists.io"]
   spec.homepage = "https://alchemists.io/projects/etcher"
-  spec.summary = "A configuration loader, transformer, and validator."
+  spec.summary = "A monadic configuration loader, transformer, and validator."
   spec.license = "Hippocratic-2.1"
 
   spec.metadata = {

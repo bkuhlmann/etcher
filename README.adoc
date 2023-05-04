@@ -7,6 +7,7 @@
 :dry_container_link: link:https://dry-rb.org/gems/dry-container[Dry Container]
 :dry_monads_link: link:https://dry-rb.org/gems/dry-monads[Dry Monads]
 :dry_schema_link: link:https://dry-rb.org/gems/dry-schema[Dry Schema]
+:dry_types_link: link:https://dry-rb.org/gems/dry-types[Dry Types]
 :dry_validation_link: link:https://dry-rb.org/gems/dry-validation[Dry Validation]
 :environment_link: link:https://rubyapi.org/3.2/o/env[Environment]
 :gitt_link: link:https://alchemists.io/projects/gitt[Gitt]
@@ -189,6 +190,29 @@ etcher.call from: "Mork", to: "Mindy"
 ----
 
 Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record and it would be nice to structured model which which we'll look at next.
+
+=== Types
+
+To support contracts further, especially when working with file paths, there is a custom type for pathnames:
+
+[source,ruby]
+----
+Etcher::Types::Pathname
+----
+
+This means you can use this custom type in your contracts to validate and cast pathnames:
+
+[source,ruby]
+----
+contract = Dry::Schema.Params do
+  required(:path).filled Etcher::Types::Pathname
+end
+
+contract.call(path: "a/path").to_monad
+# Success(#<Dry::Schema::Result{:path=>#<Pathname:a/path>} errors={} path=[]>)
+----
+
+All of this is made possible via {dry_types_link} so make sure to check out documentation for details.
 
 === Models
 

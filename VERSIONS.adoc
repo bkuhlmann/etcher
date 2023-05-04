@@ -1,5 +1,11 @@
 = Versions
 
+== 0.1.0 (2023-05-04)
+
+* Fixed symbolization of overwritten keys - Brooke Kuhlmann
+* Added Dry Types gem - Brooke Kuhlmann
+* Added Pathname custom type - Brooke Kuhlmann
+
 == 0.0.0 (2023-04-23)
 
 * Added JSON loader - Brooke Kuhlmann
