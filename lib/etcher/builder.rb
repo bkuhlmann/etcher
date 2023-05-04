@@ -16,9 +16,9 @@ module Etcher
     end
 
     def call(**overrides)
-      load(overrides).then { |content| transform content }
-                     .bind { |content| validate content }
-                     .bind { |content| record content }
+      load(overrides.symbolize_keys!).then { |content| transform content }
+                                     .bind { |content| validate content }
+                                     .bind { |content| record content }
     end
 
     private

@@ -20,9 +20,14 @@ RSpec.describe Etcher::Builder do
       expect(builder.call.success.frozen?).to be(true)
     end
 
-    it "answers overrides of defaults" do
+    it "answers overrides (symbols) of defaults" do
       attributes = {name: "test", label: "Test"}
       expect(builder.call(**attributes)).to eq(Success(attributes))
+    end
+
+    it "answers overrides (strings) of defaults" do
+      attributes = {"name" => "test", "label" => "Test"}
+      expect(builder.call(**attributes)).to eq(Success(name: "test", label: "Test"))
     end
 
     it "answers record with valid overrides" do
