@@ -47,7 +47,7 @@ module Etcher
       registry.contract
               .call(content)
               .to_monad
-              .or { |result| Failure(step: __method__, payload: result.errors.to_h) }
+              .or { |result| Failure step: __method__, payload: result.errors.to_h }
     end
 
     def record content
