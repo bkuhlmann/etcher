@@ -1,5 +1,13 @@
 = Versions
 
+== 0.2.0 (2023-06-13)
+
+* Fixed Style/MethodCallWithArgsParentheses issue - Brooke Kuhlmann
+* Updated to Cogger 0.10.0 - Brooke Kuhlmann
+* Updated to Debug 1.8.0 - Brooke Kuhlmann
+* Updated to Refinements 11.0.0 - Brooke Kuhlmann
+* Updated to Tone 0.3.0 - Brooke Kuhlmann
+
 == 0.1.0 (2023-05-04)
 
 * Fixed symbolization of overwritten keys - Brooke Kuhlmann

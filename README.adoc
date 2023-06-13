@@ -33,11 +33,11 @@ toc::[]
 
 == Features
 
-* Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. This works extremely well with the {dry_schema_link} and {dry_validation_link} gems.
-* Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. This works extremely well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
+* Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. This pairs well with the {dry_schema_link} and {dry_validation_link} gems.
+* Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. This pairs well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
 * Supports loading of default configurations from the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
 * Supports multiple transformations which can process loaded configuration hashes and answer a transformed hash.
-* Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLI) or anything that might require user input at runtime.
+* Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLIs) or anything that might require user input at runtime.
 
 == Requirements
 
@@ -120,6 +120,8 @@ The above can be broken down into a series of steps:
 
 While this is a more advanced use case, you'll usually only need to register a contract and model. The loaders and transformers provide additional firepower in situations where you need to do more with your data. We'll look at each of these components in greater detail next.
 
+ℹ️ All keys are converted to symbols before being processed. This is done to ensure consistency and improve debuggablity when dealing with raw input that might be a mix of strings and/or symbols.
+
 === Registry
 
 The registry is provided as a way to register any/all complexity for before creating a new Etcher instance. Here's what you get by default:
@@ -155,7 +157,7 @@ registry = Etcher::Registry.new
 
 === Contracts
 
-Contracts are critical piece of this workflow as they provide a way to validate incoming data, strip out unwanted data, and create a sanitized record for use in your application. Any contract that has the following behavior will work:
+Contracts are critical piece of this workflow as they provide a way to validate incoming data, remove unwanted data, and create a sanitized record for use in your application. Any contract that has the following behavior will work:
 
 * `#call`: Must be able to consume a {hash_link} and answer an object which can respond to `#to_monad`.
 
@@ -240,7 +242,18 @@ Notice we get an failure if all attributes are not provided but if we supply the
 
 === Loaders
 
-Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. There are a few guidelines to using them:
+Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. Loaders can eitehr be defined when creating a new registry instance or added after the fact. Here are a few examples:
+
+[source,ruby]
+----
+# Initializer
+registry = Etcher::Registry[loaders: [MyLoader.new]]
+
+# Method
+registry = Etcher::Registry.new.add_loader MyLoader.new
+----
+
+There are a few guidelines to using them:
 
 * They must respond to `#call` with no arguments.
 * All keys are symbolized which helps streamline merging and overriding values from the same keys across multiple configurations.
@@ -353,10 +366,22 @@ While the above isn't super useful since it only answers whatever you provide as
 
 === Transformers
 
-Transformers are great for modifying specific keys and values. They give you finer grained control over your configuration and are the last step before validating and creating an associated record of your configuration. There are a few guidelines to using them:
+Transformers are great for modifying specific keys and values. They give you finer grained control over your configuration and are the last step before validating and creating an associated record of your configuration. Transformers can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
+
+[source,ruby]
+----
+# Initializer
+registry = Etcher::Registry[transformers: [MyTransformer]]
+
+# Method
+registry = Etcher::Registry.new.add_transformer MyTransformer
+----
+
+Here are a few guidelines to using them:
 
 * They can be initialized with whatever requirements you might need.
 * They must respond to `#call` which takes a single argument (i.e. `content`) and answers a modified representation of this content as a `Success` with a `Hash` for content.
+* The `content` passed to your transformer will have symbolized keys.
 
 Here are a few examples of where you could go with this:
 
