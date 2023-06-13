@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "core", "~> 0.1"
   spec.add_dependency "dry-monads", "~> 1.6"
   spec.add_dependency "dry-types", "~> 1.7"
-  spec.add_dependency "refinements", "~> 10.0"
+  spec.add_dependency "refinements", "~> 11.0"
   spec.add_dependency "zeitwerk", "~> 2.6"
 
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]
