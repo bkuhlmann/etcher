@@ -120,7 +120,7 @@ The above can be broken down into a series of steps:
 
 While this is a more advanced use case, you'll usually only need to register a contract and model. The loaders and transformers provide additional firepower in situations where you need to do more with your data. We'll look at each of these components in greater detail next.
 
-ℹ️ All keys are converted to symbols before being processed. This is done to ensure consistency and improve debuggablity when dealing with raw input that might be a mix of strings and/or symbols.
+ℹ️ All keys are converted to symbols before being processed. This is done to ensure consistency and improve debugablity when dealing with raw input that might be a mix of strings and/or symbols.
 
 === Registry
 
@@ -242,7 +242,7 @@ Notice we get an failure if all attributes are not provided but if we supply the
 
 === Loaders
 
-Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. Loaders can eitehr be defined when creating a new registry instance or added after the fact. Here are a few examples:
+Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. Loaders can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
 
 [source,ruby]
 ----
