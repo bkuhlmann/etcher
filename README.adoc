@@ -14,6 +14,7 @@
 :hash_link: link:https://rubyapi.org/o/hash[Hash]
 :json_link: link:https://rubyapi.org/o/json[JSON]
 :runcom_link: link:https://alchemists.io/projects/runcom[Runcom]
+:sod_link: link:https://alchemists.io/projects/sod[Sod]
 :struct_link: link:https://alchemists.io/articles/ruby_structs[Struct]
 :transactable_link: link:https://alchemists.io/projects/transactable[Transactable]
 :xdg_link: link:https://alchemists.io/projects/xdg[XDG]
@@ -27,7 +28,7 @@ ____
 [Use] strong acid or mordant to cut into the unprotected parts of a metal surface to create a design in intaglio (incised) in the metal.
 ____
 
-By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and turned into records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application. In other words, the ability to take primitive hashes and _etch_ them into a _frozen_ record with a nice interface that doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Finally, this pairs well with the {xdg_link} and {runcom_link} gems, Command Line Interfaces (CLIs), Application Programming Interfaces (APIs), or any application that can be configured by the user.
+By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and turned into records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application. In other words, the ability to take primitive hashes and _etch_ them into a _frozen_ record with a nice interface that doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Finally, this pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
 
 toc::[]
 
@@ -37,7 +38,7 @@ toc::[]
 * Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. This pairs well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
 * Supports loading of default configurations from the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
 * Supports multiple transformations which can process loaded configuration hashes and answer a transformed hash.
-* Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLIs) or anything that might require user input at runtime.
+* Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLIs), as aided by {sod_link}, or anything that might require user input at runtime.
 
 == Requirements
 
@@ -87,7 +88,9 @@ etcher.call({one: 1, two: 2})
 # Success({:one=>1, :two=>2})
 ----
 
-Notice you get a monad -- either a `Success` or `Failure` -- as provided by the {dry_monads_link} gem. This allows you to create more sophisticated pipelines as found with the {transactable_link} gem or any kind of failsafe workflow you might need. The only problem is -- by default -- any attributes you message the instance with will only pass through what you gave it and always answer a `Success`. This is nice for initial experimentation but true power comes with full customization of the instance. Here's an advanced configuration showing all features:
+Notice you get a monad -- either a `Success` or `Failure` -- as provided by the {dry_monads_link} gem. This allows you to create more sophisticated pipelines as found with the {transactable_link} gem or any kind of failsafe workflow you might need.
+
+By default, any attributes you message the instance with will only pass through what you gave it and always answer a `Success`. This is nice for initial experimentation but true power comes with full customization of the instance. Here's an advanced configuration showing all features:
 
 [source,ruby]
 ----
@@ -258,7 +261,7 @@ There are a few guidelines to using them:
 * They must respond to `#call` with no arguments.
 * All keys are symbolized which helps streamline merging and overriding values from the same keys across multiple configurations.
 * All nested keys will be flattened after being loaded. This means a key structure of `{demo: {one: "test"}}` will be flattened to `demo_one: "test"` which adheres to the {demeter_link} when a new recored is _etched_ for you.
-* The order in which you define your loaders matters. This means the first loader defined will be processed first, then the second, and so forth. Loaders defined last take precedence over loaders defined first when overriding the same keys.
+* The order in which you define your loaders matters. This means the first loader defined will be processed first, then the second, and so forth. Loaders defined last take precedence over previously defined loaders when overriding the same keys.
 
 The next couple of sections will help you learn about the supported loaders and how to build your own custom loader.
 
