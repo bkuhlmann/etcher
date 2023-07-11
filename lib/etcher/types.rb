@@ -2,6 +2,7 @@
 
 require "dry/types"
 require "pathname"
+require "versionaire"
 
 module Etcher
   # Defines custom types.
@@ -9,5 +10,6 @@ module Etcher
     include Dry.Types(default: :strict)
 
     Pathname = Constructor ::Pathname
+    Version = Constructor Versionaire::Version, Versionaire.method(:Version)
   end
 end
