@@ -17,6 +17,7 @@
 :sod_link: link:https://alchemists.io/projects/sod[Sod]
 :struct_link: link:https://alchemists.io/articles/ruby_structs[Struct]
 :transactable_link: link:https://alchemists.io/projects/transactable[Transactable]
+:versionaire_link: link:https://alchemists.io/projects/versionaire[Versionaire]
 :xdg_link: link:https://alchemists.io/projects/xdg[XDG]
 :yaml_link: link:https://rubyapi.org/o/yaml[YAML]
 
@@ -125,6 +126,18 @@ While this is a more advanced use case, you'll usually only need to register a c
 
 ℹ️ All keys are converted to symbols before being processed. This is done to ensure consistency and improve debugablity when dealing with raw input that might be a mix of strings and/or symbols.
 
+=== Steps
+
+As hinted at above, the complete sequence of steps are performed in the order listed:
+
+. *Load*: Each loader, if any, is called and merged with the previous loader to build initial content.
+. *Override*: Any overrides are merged with the result of the last loader to produce updated content.
+. *Transform*: Each transformer, if any, is called to transform and manipulate the content.
+. *Validate*: The contract is called to validate the content as previously loaded, overwritten, and transformed.
+. *Model*: The model consumes the content of the validated contract and creates a new record for you to use as needed.
+
+You can use the above steps as a reference when using this gem. Each step is explained in greater detail below.
+
 === Registry
 
 The registry is provided as a way to register any/all complexity for before creating a new Etcher instance. Here's what you get by default:
@@ -198,14 +211,16 @@ Here you can see the power of using a contract to validate your data both as a f
 
 === Types
 
-To support contracts further, especially when working with file paths, there is a custom type for pathnames:
+To support contracts further, there are a couple custom types which might be of interest. Each custom type, as described below, is made possible via {dry_types_link}.
+
+==== Pathnames
 
 [source,ruby]
 ----
 Etcher::Types::Pathname
 ----
 
-This means you can use this custom type in your contracts to validate and cast pathnames:
+The above allows you to use pathname types in your contracts to validate and cast as pathnames:
 
 [source,ruby]
 ----
@@ -217,7 +232,24 @@ contract.call(path: "a/path").to_monad
 # Success(#<Dry::Schema::Result{:path=>#<Pathname:a/path>} errors={} path=[]>)
 ----
 
-All of this is made possible via {dry_types_link} so make sure to check out documentation for details.
+==== Versions
+
+[source,ruby]
+----
+Etcher::Types::Version
+----
+
+The above allows you to validate and cast versions within your contracts -- via the {versionaire_link} gem -- as follows:
+
+[source,ruby]
+----
+contract = Dry::Schema.Params do
+  required(:version).filled Etcher::Types::Version
+end
+
+contract.call(version: "1.2.3").to_monad
+# Success(#<Dry::Schema::Result{:version=>"1.2.3"} errors={} path=[]>)
+----
 
 === Models
 

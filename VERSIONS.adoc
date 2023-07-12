@@ -1,5 +1,12 @@
 = Versions
 
+== 0.3.0 (2023-07-11)
+
+* Fixed RuboCop Packaging/BundlerSetupInTests issues - Brooke Kuhlmann
+* Added Versionaire gem - Brooke Kuhlmann
+* Added custom version type - Brooke Kuhlmann
+* Updated Rake RSpec task configuration to not be verbose - Brooke Kuhlmann
+
 == 0.2.1 (2023-06-19)
 
 * Updated documention to reference the Sod gem - Brooke Kuhlmann
