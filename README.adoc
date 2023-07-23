@@ -29,14 +29,14 @@ ____
 [Use] strong acid or mordant to cut into the unprotected parts of a metal surface to create a design in intaglio (incised) in the metal.
 ____
 
-By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and turned into records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application. In other words, the ability to take primitive hashes and _etch_ them into a _frozen_ record with a nice interface that doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Finally, this pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
+By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and etched into _frozen_ records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application which doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
 
 toc::[]
 
 == Features
 
-* Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. This pairs well with the {dry_schema_link} and {dry_validation_link} gems.
-* Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. This pairs well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
+* Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. Pairs well with the {dry_schema_link} and {dry_validation_link} gems.
+* Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. Pairs well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
 * Supports loading of default configurations from the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
 * Supports multiple transformations which can process loaded configuration hashes and answer a transformed hash.
 * Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLIs), as aided by {sod_link}, or anything that might require user input at runtime.
@@ -106,7 +106,10 @@ contract = Dry::Schema.Params do
 end
 
 model = Data.define :user, :home
-transformer = -> content { Dry::Monads::Success content.merge! user: content[:user].upcase }
+
+transformer = lambda do |content, key = :user|
+  Dry::Monads::Success content.merge! key => content[key].upcase
+end
 
 Etcher::Registry.new(contract:, model:, transformers: [transformer])
                 .add_loader(Etcher::Loaders::Environment.new(%w[USER HOME]))
@@ -135,6 +138,8 @@ As hinted at above, the complete sequence of steps are performed in the order li
 . *Transform*: Each transformer, if any, is called to transform and manipulate the content.
 . *Validate*: The contract is called to validate the content as previously loaded, overwritten, and transformed.
 . *Model*: The model consumes the content of the validated contract and creates a new record for you to use as needed.
+
+💡 The _override_ step comes after the _load_ step and before the _transform_ step because this gives you maximum flexibility to override any loaded/overwritten attributes while allowing you to transform any/all attributes based on whether they exist or not.
 
 You can use the above steps as a reference when using this gem. Each step is explained in greater detail below.
 
@@ -169,7 +174,7 @@ registry = Etcher::Registry.new
                            .add_transformer(MyTransformer)
 ----
 
-💡 Order matters so ensure you list your loaders and transformers in the order you want them to be processed.
+💡 Order matters so ensure you list your loaders and transformers in the order you want them processed.
 
 === Contracts
 
@@ -277,7 +282,7 @@ Notice we get an failure if all attributes are not provided but if we supply the
 
 === Loaders
 
-Loaders are a great way to load _default_ configuration information for your application which can be in multiple formats. Loaders can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
+Loaders are a great way to load a _default_ configuration for your application which can be in multiple formats. Loaders can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
 
 [source,ruby]
 ----
@@ -373,7 +378,7 @@ If the file did exist and had content, you'd get a `Success` with a `Hash` of th
 
 ==== Custom
 
-You can always create your own loader if you don't need or want any of the default loaders provided for you. The only requirement is your loader _must_ respond to `#call` and answer a `Success` with a `Hash` for content which means you can use a class, method, lambda, or proc. Here's an example of creating a custom loader, registering, and using it:
+You can always create your own loader if you don't need or want any of the default loaders provided for you. The only requirement is your loader _must_ respond to `#call` and answer a monad with a `Hash` for content which means you can use a class, method, lambda, or proc. Here's an example of creating a custom loader, registering, and using it:
 
 [source,ruby]
 ----
@@ -415,8 +420,9 @@ registry = Etcher::Registry.new.add_transformer MyTransformer
 Here are a few guidelines to using them:
 
 * They can be initialized with whatever requirements you might need.
-* They must respond to `#call` which takes a single argument (i.e. `content`) and answers a modified representation of this content as a `Success` with a `Hash` for content.
-* The `content` passed to your transformer will have symbolized keys.
+* They must respond to `#call` which takes a required `content` positional argument and answers a modified representation of this content as a monad with a `Hash` for content.
+* A second _optional_ positional `key` parameter should follow your `content` parameter when implementing your transformer. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
+* The `content` passed to your transformer will have symbolized keys so you don't need to do this yourself.
 
 Here are a few examples of where you could go with this:
 
@@ -438,14 +444,19 @@ The following updates current time relative to when configuration was transforme
 ----
 require "dry/monads"
 
-CurrentTime = lambda do |content, at: Time.now|
-  content[:at] = at
-  Dry::Monads::Success content
+CurrentTime = lambda do |content, key = :at, at: Time.now|
+  content.fetch(key) { at }
+         .then { |value| Dry::Monads::Success content.merge!(key => value) }
 end
 
 CurrentTime.call({})
-
 # Success({:at=>2023-04-23 15:22:23.746408 -0600})
+
+CurrentTime.call({at: Time.utc(2023, 10, 15)})
+# Success({:at=>2023-10-15 00:00:00 UTC})
+
+CurrentTime.call({}, at: Time.utc(2023, 1, 10))
+# Success({:at=>2023-01-10 00:00:00 UTC})
 ----
 
 The following obtains the current Git user's email address from the global Git configuration using the {gitt_link} gem.
@@ -456,15 +467,16 @@ require "dry/monads"
 require "gitt"
 
 class GitEmail
-  def initialize git: Gitt::Repository.new
+  def initialize key = :author_email, git: Gitt::Repository.new
+    @key = key
     @git = git
   end
 
-  def call(content) = git.get("user.email").fmap { |email| content[:author_email] = email }
+  def call(content) = git.get("user.email").fmap { |value| content[key] = value }
 
   private
 
-  attr_reader :git
+  attr_reader :key, :git
 end
 
 GitEmail.new.call({})
@@ -493,7 +505,7 @@ etcher.call name: "test", label: "Test"
 # Success({:name=>"test", :label=>"Test"})
 ----
 
-These _overrides_ are applied _after_ all loaders are processed and _before_ any transformations. They are a nice way to deal with user input during runtime or provide any additional configuration not supplied by the loading of your default configuration.
+Overrides are applied _after_ any loaders are processed and _before_ any transformations. They are a nice way to deal with user input during runtime or provide any additional configuration not supplied by the loading of your default configuration while still allowing you to transform them if desired.
 
 === Resolver
 
