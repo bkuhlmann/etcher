@@ -3,8 +3,10 @@
 require "cogger"
 require "zeitwerk"
 
-Zeitwerk::Loader.for_gem.then do |loader|
+Zeitwerk::Loader.new.then do |loader|
   loader.inflector.inflect "json" => "JSON", "yaml" => "YAML"
+  loader.tag = File.basename __FILE__, ".rb"
+  loader.push_dir __dir__
   loader.setup
 end
 
