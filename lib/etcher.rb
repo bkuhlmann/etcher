@@ -12,7 +12,7 @@ end
 
 # Main namespace.
 module Etcher
-  LOGGER = Cogger.new id: :etcher, formatter: :emoji
+  LOGGER = Cogger.new id: :etcher
 
   def self.loader(registry = Zeitwerk::Registry) = registry.loader_for __FILE__
 
