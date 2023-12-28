@@ -1,14 +1,14 @@
 # frozen_string_literal: true
 
 require "dry/monads"
-require "refinements/arrays"
+require "refinements/array"
 
 module Etcher
   # Builds and fully resolves a configuration.
   class Resolver
     include Dry::Monads[:result]
 
-    using Refinements::Arrays
+    using Refinements::Array
 
     def initialize registry = Registry.new, kernel: Kernel, logger: LOGGER
       @builder = Builder.new registry

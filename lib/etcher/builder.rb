@@ -2,14 +2,14 @@
 
 require "core"
 require "dry/monads"
-require "refinements/hashes"
+require "refinements/hash"
 
 module Etcher
   # Builds a configuration.
   class Builder
     include Dry::Monads[:result]
 
-    using Refinements::Hashes
+    using Refinements::Hash
 
     def initialize registry = Registry.new
       @registry = registry

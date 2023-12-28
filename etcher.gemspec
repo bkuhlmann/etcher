@@ -23,12 +23,12 @@ Gem::Specification.new do |spec|
   spec.cert_chain = [Gem.default_cert_path]
 
   spec.required_ruby_version = "~> 3.3"
-  spec.add_dependency "cogger", "~> 0.12"
-  spec.add_dependency "core", "~> 0.1"
+  spec.add_dependency "cogger", "~> 0.15"
+  spec.add_dependency "core", "~> 1.0"
   spec.add_dependency "dry-monads", "~> 1.6"
   spec.add_dependency "dry-types", "~> 1.7"
-  spec.add_dependency "refinements", "~> 11.0"
-  spec.add_dependency "versionaire", "~> 12.1"
+  spec.add_dependency "refinements", "~> 12.0"
+  spec.add_dependency "versionaire", "~> 13.0"
   spec.add_dependency "zeitwerk", "~> 2.6"
 
   spec.extra_rdoc_files = Dir["README*", "LICENSE*"]

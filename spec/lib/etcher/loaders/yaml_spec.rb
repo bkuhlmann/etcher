@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe Etcher::Loaders::YAML do
   include Dry::Monads[:result]
 
-  using Refinements::Pathnames
+  using Refinements::Pathname
 
   subject(:loader) { described_class.new path, logger: }
 
