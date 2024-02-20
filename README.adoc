@@ -134,12 +134,10 @@ While this is a more advanced use case, you'll usually only need to register a c
 As hinted at above, the complete sequence of steps are performed in the order listed:
 
 . *Load*: Each loader, if any, is called and merged with the previous loader to build initial content.
-. *Override*: Any overrides are merged with the result of the last loader to produce updated content.
+. *Override*: Any overrides are merged with the result of the last loader to produce updated content. _In Version 2.0.0, this step happen after the Transform step._
 . *Transform*: Each transformer, if any, is called to transform and manipulate the content.
 . *Validate*: The contract is called to validate the content as previously loaded, overwritten, and transformed.
 . *Model*: The model consumes the content of the validated contract and creates a new record for you to use as needed.
-
-💡 The _override_ step comes after the _load_ step and before the _transform_ step because this gives you maximum flexibility to override any loaded/overwritten attributes while allowing you to transform any/all attributes based on whether they exist or not.
 
 You can use the above steps as a reference when using this gem. Each step is explained in greater detail below.
 
@@ -506,6 +504,8 @@ etcher.call name: "test", label: "Test"
 ----
 
 Overrides are applied _after_ any loaders are processed and _before_ any transformations. They are a nice way to deal with user input during runtime or provide any additional configuration not supplied by the loading of your default configuration while still allowing you to transform them if desired.
+
+⚠️ In Version 2.0.0, this step will be changed to occur _after_ the Transform step for maximum flexibility.
 
 === Resolver
 
