@@ -16,7 +16,7 @@ RSpec.describe Etcher do
 
   describe ".new" do
     it "answers default builder instance" do
-      expect(described_class.new).to be_a(Etcher::Builder)
+      expect(described_class.new).to be_a(described_class::Builder)
     end
   end
 
