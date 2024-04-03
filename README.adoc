@@ -4,7 +4,6 @@
 
 :data_link: link:https://alchemists.io/articles/ruby_data[Data]
 :demeter_link: link:https://en.wikipedia.org/wiki/Law_of_Demeter[Law of Demeter]
-:dry_container_link: link:https://dry-rb.org/gems/dry-container[Dry Container]
 :dry_monads_link: link:https://dry-rb.org/gems/dry-monads[Dry Monads]
 :dry_schema_link: link:https://dry-rb.org/gems/dry-schema[Dry Schema]
 :dry_types_link: link:https://dry-rb.org/gems/dry-types[Dry Types]
@@ -13,10 +12,10 @@
 :gitt_link: link:https://alchemists.io/projects/gitt[Gitt]
 :hash_link: link:https://rubyapi.org/o/hash[Hash]
 :json_link: link:https://rubyapi.org/o/json[JSON]
+:pipeable_link: link:https://alchemists.io/projects/pipeable[Pipeable]
 :runcom_link: link:https://alchemists.io/projects/runcom[Runcom]
 :sod_link: link:https://alchemists.io/projects/sod[Sod]
 :struct_link: link:https://alchemists.io/articles/ruby_structs[Struct]
-:transactable_link: link:https://alchemists.io/projects/transactable[Transactable]
 :versionaire_link: link:https://alchemists.io/projects/versionaire[Versionaire]
 :xdg_link: link:https://alchemists.io/projects/xdg[XDG]
 :yaml_link: link:https://rubyapi.org/o/yaml[YAML]
@@ -89,7 +88,7 @@ etcher.call({one: 1, two: 2})
 # Success({:one=>1, :two=>2})
 ----
 
-Notice you get a monad -- either a `Success` or `Failure` -- as provided by the {dry_monads_link} gem. This allows you to create more sophisticated pipelines as found with the {transactable_link} gem or any kind of failsafe workflow you might need.
+Notice you get a monad -- either a `Success` or `Failure` -- as provided by the {dry_monads_link} gem. This allows you to create more sophisticated pipelines as found with the {pipeable_link} gem or any kind of failsafe workflow you might need.
 
 By default, any attributes you message the instance with will only pass through what you gave it and always answer a `Success`. This is nice for initial experimentation but true power comes with full customization of the instance. Here's an advanced configuration showing all features:
 

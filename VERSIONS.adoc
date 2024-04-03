@@ -1,5 +1,10 @@
 = Versions
 
+== 1.3.0 (2024-04-03)
+
+* 🔼 Updated setup script as a Ruby script - Brooke Kuhlmann
+* 🔼 Updated to Amazing Print 1.6.0 - Brooke Kuhlmann
+
 == 1.2.0 (2024-03-03)
 
 * ✅ Fixed RuboCop RSpec/DescribedClass issue - Brooke Kuhlmann
