@@ -9,6 +9,7 @@ participant Load
 participant Override
 participant Transform
 participant Validate
+participant Model
 participant Result
 
 Load->Load: Load.
@@ -33,10 +34,16 @@ end note
 
 Transform->Validate: Transfer.
 
-Validate->Result: Validate
+Validate->Model: Validate
 
 note over Validate
-  "Ensures merged and transformed configuration is valid."
+  "Ensures attributes are valid."
+end note
+
+Model->Result: Record
+
+note over Model
+  "Converts attributes into a structured record."
 end note
 
 note over Result
