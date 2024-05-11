@@ -4,8 +4,8 @@ require "dry/monads"
 
 module Etcher
   # A simple passthrough contract.
-  Contract = lambda do |content|
-    def content.to_monad = Dry::Monads::Success self unless content.respond_to? :to_monad
-    content
+  Contract = lambda do |result|
+    def result.to_monad = Dry::Monads::Success self unless result.respond_to? :to_monad
+    result
   end
 end

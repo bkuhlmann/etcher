@@ -118,8 +118,8 @@ RSpec.describe Etcher::Builder do
     it "answers record for custom contract, model, loaders, transforms, and overrides" do
       registry = Etcher::Registry[contract:, model:]
       registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/one.json"))
-      registry.add_transformer(-> content { Success content.merge!(name: content[:name].upcase) })
-      registry.add_transformer(-> content { Success content.merge!(name: "#{content[:name]}!") })
+      registry.add_transformer(-> pairs { Success pairs.merge!(name: pairs[:name].upcase) })
+      registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
       builder = described_class.new registry
 
       expect(builder.call(name: "test")).to eq(Success(model[name: "TEST!"]))

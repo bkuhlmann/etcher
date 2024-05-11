@@ -18,7 +18,7 @@ module Etcher
 
     def call(**overrides)
       case builder.call(**overrides)
-        in Success(content) then content
+        in Success(attributes) then attributes
         in Failure(step:, payload: String => payload)
           logger.fatal { "Build failure: #{step.inspect}. #{payload}" }
           kernel.abort

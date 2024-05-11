@@ -8,19 +8,19 @@ RSpec.describe Etcher::Contract do
   subject(:contract) { described_class }
 
   describe "#call" do
-    let(:content) { {name: "test"} }
+    let(:attributes) { {name: "test"} }
 
-    it "passes content through" do
-      expect(contract.call(content)).to eq(name: "test")
+    it "passes attributes through" do
+      expect(contract.call(attributes)).to eq(name: "test")
     end
 
     it "doesn't define monad method multiple times" do
-      contract.call content
-      expect(contract.call(content)).to eq(name: "test")
+      contract.call attributes
+      expect(contract.call(attributes)).to eq(name: "test")
     end
 
-    it "can be cast to a monad" do
-      expect(contract.call(content).to_monad).to eq(Success(name: "test"))
+    it "can be cast as a monad" do
+      expect(contract.call(attributes).to_monad).to eq(Success(name: "test"))
     end
   end
 end
