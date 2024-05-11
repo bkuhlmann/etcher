@@ -25,8 +25,6 @@ module Etcher
 
     attr_reader :registry
 
-    # :reek:NestedIterators
-    # :reek:TooManyStatements
     def load overrides
       registry.loaders
               .map { |loader| loader.call.fmap { |pairs| pairs.flatten_keys.symbolize_keys! } }
@@ -36,7 +34,6 @@ module Etcher
               .then { |attributes| Success attributes }
     end
 
-    # :reek:NestedIterators
     def transform attributes
       registry.transformers.reduce attributes do |all, transformer|
         all.bind { |body| transformer.call body }

@@ -6,3 +6,10 @@ detectors:
   ModuleInitialize:
     exclude:
       - Etcher
+  NestedIterators:
+    exclude:
+      - Etcher::Builder#load
+      - Etcher::Builder#transform
+  TooManyStatements:
+    exclude:
+      - Etcher::Builder#load
