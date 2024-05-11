@@ -1,5 +1,15 @@
 = Versions
 
+== 1.4.0 (2024-05-11)
+
+* ✅ Fixed record step to be model step - Brooke Kuhlmann
+* 🔼 Updated Reek configuration to account for builder implementation - Brooke Kuhlmann
+* 🔼 Updated architecture diagram to include model step - Brooke Kuhlmann
+* 🔼 Updated to Git Lint 7.3.0 - Brooke Kuhlmann
+* 🔼 Updated to Rake 13.2.0 - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.1 - Brooke Kuhlmann
+* 🔁 Refactored use of content terminology as attributes where appropriate - Brooke Kuhlmann
+
 == 1.3.0 (2024-04-03)
 
 * 🔼 Updated setup script as a Ruby script - Brooke Kuhlmann

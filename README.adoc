@@ -28,7 +28,7 @@ ____
 [Use] strong acid or mordant to cut into the unprotected parts of a metal surface to create a design in intaglio (incised) in the metal.
 ____
 
-By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and etched into _frozen_ records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application which doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API. Pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
+By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and etched into _frozen_ records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application which doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API and pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
 
 toc::[]
 
@@ -106,8 +106,8 @@ end
 
 model = Data.define :user, :home
 
-transformer = lambda do |content, key = :user|
-  Dry::Monads::Success content.merge! key => content[key].upcase
+transformer = lambda do |attributes, key = :user|
+  Dry::Monads::Success attributes.merge! key => attributes[key].upcase
 end
 
 Etcher::Registry.new(contract:, model:, transformers: [transformer])
@@ -122,7 +122,7 @@ The above can be broken down into a series of steps:
 . A {dry_schema_link} contract -- loaded with {dry_monads_link} extensions -- is created to verify untrusted attributes.
 . A model is created with attributes: `user` and `home`.
 . A registry is constructed with a custom contract, model, loader, and transformer.
-. Finally, we see a _successfully_ built configuration for further use.
+. Finally, we see a _successfully_ built configuration for further use within your application.
 
 While this is a more advanced use case, you'll usually only need to register a contract and model. The loaders and transformers provide additional firepower in situations where you need to do more with your data. We'll look at each of these components in greater detail next.
 
@@ -132,11 +132,11 @@ While this is a more advanced use case, you'll usually only need to register a c
 
 As hinted at above, the complete sequence of steps are performed in the order listed:
 
-. *Load*: Each loader, if any, is called and merged with the previous loader to build initial content.
-. *Override*: Any overrides are merged with the result of the last loader to produce updated content. _In Version 2.0.0, this step happen after the Transform step._
-. *Transform*: Each transformer, if any, is called to transform and manipulate the content.
-. *Validate*: The contract is called to validate the content as previously loaded, overwritten, and transformed.
-. *Model*: The model consumes the content of the validated contract and creates a new record for you to use as needed.
+. *Load*: Each loader, if any, is called and merged with the previous loader to build initial attributes.
+. *Override*: Any overrides are merged with the result of the last loader to produce updated attributes. ⚠️ _In Version 2.0.0, this step will happen after the Transform step._
+. *Transform*: Each transformer, if any, is called to transform and manipulate the attributes.
+. *Validate*: The contract is called to validate the attributes as previously loaded, overwritten, and transformed.
+. *Model*: The model consumes the attributes of the validated contract and creates a new record for you to use as needed.
 
 You can use the above steps as a reference when using this gem. Each step is explained in greater detail below.
 
@@ -150,7 +150,7 @@ Etcher::Registry.new
 # #<data Etcher::Registry contract=#<Proc:0x000000010e393550 contract.rb:7 (lambda)>, model=Hash, loaders=[], transformers=[]>
 ----
 
-Since the registry is a {data_link}, you can initialize with everything you need:
+Since the registry is {data_link}, you can initialize with everything you need:
 
 [source,ruby]
 ----
@@ -175,11 +175,11 @@ registry = Etcher::Registry.new
 
 === Contracts
 
-Contracts are critical piece of this workflow as they provide a way to validate incoming data, remove unwanted data, and create a sanitized record for use in your application. Any contract that has the following behavior will work:
+Contracts are a critical piece of this workflow as they provide a way to validate incoming data, remove unwanted data, and create a sanitized record for use in your application. Any contract that has the following behavior will work:
 
 * `#call`: Must be able to consume a {hash_link} and answer an object which can respond to `#to_monad`.
 
-The best gems which adhere to this interface are: {dry_schema_link} and {dry_validation_link}. You'll also want to make sure the {dry_monads_link} extensions are loaded as briefly shown earlier so the result will respond to `#to_monad`. Here's how to enable monad support if using both gems:
+The best gems which adhere to this interface are: {dry_schema_link} and {dry_validation_link}. You'll also want to make sure the {dry_monads_link} extensions are loaded, as briefly shown earlier, so the result will respond to `#to_monad`. Here's how to enable monad support if using both gems:
 
 [source,ruby]
 ----
@@ -209,7 +209,7 @@ etcher.call from: "Mork", to: "Mindy"
 # Success({:from=>"Mork", :to=>"Mindy"})
 ----
 
-Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record and it would be nice to structured model which which we'll look at next.
+Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record and it would be nice to structured record which will be explained shortly.
 
 === Types
 
@@ -267,7 +267,7 @@ model = Data.define :from, :to
 etcher = Etcher::Registry[model:].then { |registry| Etcher.new registry }
 
 etcher.call
-# Failure({:step=>:record, :payload=>"Missing keywords: :from, :to."})
+# Failure({:step=>:model, :payload=>"Missing keywords: :from, :to."})
 
 etcher.call from: "Mork", to: "Mindy"
 # Success(#<data Model from="Mork", to="Mindy">)
@@ -344,7 +344,7 @@ loader = Etcher::Loaders::JSON.new "your/path/to/configuration.json",
 loader.call  # Success({})
 ----
 
-If the file did exist and had content, you'd get a `Success` with a `Hash` of the contents.
+Otherwise, if the file exists with content, you'll get a `Hash` wrapped as a `Success`.
 
 ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
 
@@ -369,7 +369,7 @@ loader = Etcher::Loaders::YAML.new "your/path/to/configuration.yml",
 loader.call  # Success({})
 ----
 
-If the file did exist and had content, you'd get a `Success` with a `Hash` of the contents.
+Otherwise, if the file exists with content, you'll get a `Hash` wrapped as a `Success`.
 
 ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
 
@@ -417,9 +417,9 @@ registry = Etcher::Registry.new.add_transformer MyTransformer
 Here are a few guidelines to using them:
 
 * They can be initialized with whatever requirements you might need.
-* They must respond to `#call` which takes a required `content` positional argument and answers a modified representation of this content as a monad with a `Hash` for content.
-* A second _optional_ positional `key` parameter should follow your `content` parameter when implementing your transformer. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
-* The `content` passed to your transformer will have symbolized keys so you don't need to do this yourself.
+* They must respond to `#call` which takes a required `attributes` positional argument and answers a modified version of these attributes (`Hash`) wrapped as a monad.
+* A second _optional_ positional `key` parameter should follow your `attributes` parameter when implementing your transformer. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
+* The `attributes` passed to your transformer will have symbolized keys so you don't need to transform them further.
 
 Here are a few examples of where you could go with this:
 
@@ -429,7 +429,7 @@ The following capitalizes all values (which may or may not be good depending on 
 ----
 require "dry/monads"
 
-Capitalize = -> content { Dry::Monads::Success content.transform_values!(&:capitalize) }
+Capitalize = -> attributes { Dry::Monads::Success attributes.transform_values!(&:capitalize) }
 Capitalize.call(name: "test")
 
 # Success({:name=>"Test"})
@@ -441,9 +441,9 @@ The following updates current time relative to when configuration was transforme
 ----
 require "dry/monads"
 
-CurrentTime = lambda do |content, key = :at, at: Time.now|
-  content.fetch(key) { at }
-         .then { |value| Dry::Monads::Success content.merge!(key => value) }
+CurrentTime = lambda do |attributes, key = :at, at: Time.now|
+  attributes.fetch(key) { at }
+            .then { |value| Dry::Monads::Success attributes.merge!(key => value) }
 end
 
 CurrentTime.call({})
@@ -469,7 +469,7 @@ class GitEmail
     @git = git
   end
 
-  def call(content) = git.get("user.email").fmap { |value| content[key] = value }
+  def call(attributes) = git.get("user.email").fmap { |value| attributes[key] = value }
 
   private
 
@@ -516,7 +516,7 @@ Etcher.call name: "demo"
 # {:name=>"demo"}
 ----
 
-When called _and there are no issues_, you'll get the fully formed record as a result (in this case a Hash which is the default model). You'll never a get a monad when using `Etcher.call` because this is meant to resolve the monadic pipeline for you. If any failure is encountered, then Etcher will _abort_ with a fatal log message. Here's a variation of earlier examples which demonstrates fatal errors:
+When called -- and there are no issues -- you'll get the fully formed record as a result (in this case a Hash which is the default model). You'll never a get a monad when using `Etcher.call` because this is meant to resolve the monadic pipeline for you. If any failure is encountered, then Etcher will _abort_ with a fatal log message. Here's a variation of earlier examples which demonstrates fatals:
 
 [source,ruby]
 ----
