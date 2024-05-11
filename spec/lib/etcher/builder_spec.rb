@@ -94,7 +94,7 @@ RSpec.describe Etcher::Builder do
       builder = described_class.new registry
 
       expect(builder.call(name: "test")).to eq(
-        Failure(step: :record, payload: "Unknown keyword: :name.")
+        Failure(step: :model, payload: "Unknown keyword: :name.")
       )
     end
 
@@ -111,11 +111,11 @@ RSpec.describe Etcher::Builder do
       builder = described_class.new registry
 
       expect(builder.call(name: "test")).to eq(
-        Failure(step: :record, payload: "Unknown keywords: name.")
+        Failure(step: :model, payload: "Unknown keywords: name.")
       )
     end
 
-    it "answers record for custom contract, model, loaders, transforms, and overrides" do
+    it "answers record for custom loaders, transforms, overrides, contract, and model" do
       registry = Etcher::Registry[contract:, model:]
       registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/one.json"))
       registry.add_transformer(-> pairs { Success pairs.merge!(name: pairs[:name].upcase) })

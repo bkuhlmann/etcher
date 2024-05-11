@@ -58,7 +58,7 @@ RSpec.describe Etcher::Resolver do
           Cogger.color,
           ["🔥 "],
           [
-            "Build failure: :record. Unknown keywords: :name, :label.",
+            "Build failure: :model. Unknown keywords: :name, :label.",
             :bold,
             :white,
             :on_red
