@@ -1,5 +1,11 @@
 = Versions
 
+== 1.5.0 (2024-05-23)
+
+* 🟢 Added IRB Kit gem - Brooke Kuhlmann
+* 🟢 Added time transfomer - Brooke Kuhlmann
+* 🔼 Updated RSpec configuration to ignore backtraces in pending specs - Brooke Kuhlmann
+
 == 1.4.0 (2024-05-11)
 
 * ✅ Fixed record step to be model step - Brooke Kuhlmann

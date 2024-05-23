@@ -414,16 +414,15 @@ registry = Etcher::Registry[transformers: [MyTransformer]]
 registry = Etcher::Registry.new.add_transformer MyTransformer
 ----
 
-Here are a few guidelines to using them:
+The guidelines for using transformers are:
 
-* They can be initialized with whatever requirements you might need.
+* They can be initialized with whatever requirements you need.
 * They must respond to `#call` which takes a required `attributes` positional argument and answers a modified version of these attributes (`Hash`) wrapped as a monad.
-* A second _optional_ positional `key` parameter should follow your `attributes` parameter when implementing your transformer. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
+* When using a proc/lambda, the first, _required_, parameter should be the `attributes` parameter followed by an _optional_ positional `key` parameter with a default value. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
+* When using a class, the `key` should be your first positional parameter with a default value. Additional parameters can be supplied after if desired.
 * The `attributes` passed to your transformer will have symbolized keys so you don't need to transform them further.
 
-Here are a few examples of where you could go with this:
-
-The following capitalizes all values (which may or may not be good depending on your data structure).
+For example, the following capitalizes all values (which may or may not be good depending on your data structure):
 
 [source,ruby]
 ----
@@ -435,28 +434,7 @@ Capitalize.call(name: "test")
 # Success({:name=>"Test"})
 ----
 
-The following updates current time relative to when configuration was transformed.
-
-[source,ruby]
-----
-require "dry/monads"
-
-CurrentTime = lambda do |attributes, key = :at, at: Time.now|
-  attributes.fetch(key) { at }
-            .then { |value| Dry::Monads::Success attributes.merge!(key => value) }
-end
-
-CurrentTime.call({})
-# Success({:at=>2023-04-23 15:22:23.746408 -0600})
-
-CurrentTime.call({at: Time.utc(2023, 10, 15)})
-# Success({:at=>2023-10-15 00:00:00 UTC})
-
-CurrentTime.call({}, at: Time.utc(2023, 1, 10))
-# Success({:at=>2023-01-10 00:00:00 UTC})
-----
-
-The following obtains the current Git user's email address from the global Git configuration using the {gitt_link} gem.
+The following obtains the current Git user's email address from the global Git configuration using the {gitt_link} gem:
 
 [source,ruby]
 ----
@@ -485,9 +463,36 @@ To use all of the above, you'd only need to register and use them:
 
 [source,ruby]
 ----
-registry = Etcher::Registry[transformers: [Capitalize, CurrentTime, GitEmail.new]]
+registry = Etcher::Registry[transformers: [Capitalize, GitEmail.new]]
 etcher = Etcher.new(registry)
 etcher.call
+----
+
+If you'd like prebuilt transformers, the following details what is supplied by this gem.
+
+==== Time
+
+Use `Etcher::Transformers::Time` to transform the `loaded_at` key in your configuration when you want to know the current time at which the configuration was loaded. Handy for situations where you need to calculate relative time or format time based on when your configuration was loaded.
+
+Even though `loaded_at` is the default key and `Time.now.utc` is the default fallback, you're not limited to using different keys and fallbacks. Example:
+
+[source,ruby]
+----
+transformer = Etcher::Transformers::Time.new
+transformer.call({})
+# Success({:loaded_at=>2024-05-23 22:18:27.92767 UTC})
+
+transformer = Etcher::Transformers::Time.new :now
+transformer.call({})
+# Success({:now=>2024-05-23 22:18:49.93189 UTC})
+
+transformer = Etcher::Transformers::Time.new :now, fallback: Time.utc(2000, 1, 1)
+transformer.call({})
+# Success({:now=>2000-01-01 00:00:00 UTC})
+
+transformer = Etcher::Transformers::Time.new
+transformer.call({loaded_at: Time.utc(2000, 1, 1)})
+# Success({:loaded_at=>2000-01-01 00:00:00 UTC})
 ----
 
 === Overrides
