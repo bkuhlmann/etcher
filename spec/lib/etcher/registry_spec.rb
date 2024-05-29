@@ -5,6 +5,27 @@ require "spec_helper"
 RSpec.describe Etcher::Registry do
   subject(:registry) { described_class.new }
 
+  describe ".find" do
+    it "answers constant when found" do
+      expect(described_class.find(:Loaders, :json)).to eq(Etcher::Loaders::JSON)
+    end
+
+    it "aborts when failure" do
+      logger = instance_spy Cogger::Hub
+      described_class.find(:Loaders, :bogus, logger:)
+
+      expect(logger).to have_received(:abort).with("Unable to select :bogus within loaders.")
+    end
+
+    it "aborts when unable to find constant" do
+      allow(Etcher::Finder).to receive(:call).and_return "Danger!"
+      logger = instance_spy Cogger::Hub
+      described_class.find(:bogus, :bogus, logger:)
+
+      expect(logger).to have_received(:abort).with("Unable to find constant in registry.")
+    end
+  end
+
   describe "#initialize" do
     it "answers defaults" do
       expect(registry).to have_attributes(
@@ -17,7 +38,12 @@ RSpec.describe Etcher::Registry do
   end
 
   describe "#add_loader" do
-    it "adds loader" do
+    it "adds loader (symbol)" do
+      registry.add_loader :json, "test.json"
+      expect(registry.loaders).to contain_exactly(kind_of(Etcher::Loaders::JSON))
+    end
+
+    it "adds loader (instance)" do
       loader = Etcher::Loaders::JSON.new "test.json"
       registry.add_loader loader
 
@@ -36,7 +62,12 @@ RSpec.describe Etcher::Registry do
   end
 
   describe "#add_transformer" do
-    it "adds transformer" do
+    it "adds transformer (symbol)" do
+      registry.add_transformer :time
+      expect(registry.transformers).to contain_exactly(kind_of(Etcher::Transformers::Time))
+    end
+
+    it "adds transformer (instance)" do
       transformer = proc { "test" }
       registry.add_transformer transformer
 
