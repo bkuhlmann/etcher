@@ -1,5 +1,13 @@
 = Versions
 
+== 1.6.0 (2024-05-30)
+
+* 🟢 Added finder - Brooke Kuhlmann
+* 🟢 Added string transformer - Brooke Kuhlmann
+* 🔼 Updated citation URLs - Brooke Kuhlmann
+* 🔼 Updated registry to find symbolized loaders and transformers - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.2 - Brooke Kuhlmann
+
 == 1.5.0 (2024-05-23)
 
 * 🟢 Added IRB Kit gem - Brooke Kuhlmann

@@ -111,7 +111,7 @@ transformer = lambda do |attributes, key = :user|
 end
 
 Etcher::Registry.new(contract:, model:, transformers: [transformer])
-                .add_loader(Etcher::Loaders::Environment.new(%w[USER HOME]))
+                .add_loader(:environment, %w[USER HOME])
                 .then { |registry| Etcher.new(registry).call }
 
 # Success(#<data user="DEMO", home="/Users/demo">)
@@ -297,11 +297,29 @@ There are a few guidelines to using them:
 * All nested keys will be flattened after being loaded. This means a key structure of `{demo: {one: "test"}}` will be flattened to `demo_one: "test"` which adheres to the {demeter_link} when a new recored is _etched_ for you.
 * The order in which you define your loaders matters. This means the first loader defined will be processed first, then the second, and so forth. Loaders defined last take precedence over previously defined loaders when overriding the same keys.
 
-The next couple of sections will help you learn about the supported loaders and how to build your own custom loader.
+For convenience, all loaders -- only packaged with this gem -- can be registered by symbol instead of constant/instance. Example:
+
+[source,ruby]
+----
+registry = Etcher::Registry.new
+
+# Environment
+registry.add_loader :environment
+
+# JSON
+registry.add_loader :json, "path/to/configuration.json"
+
+# YAML
+registry.add_loader :yaml, "path/to/configuration.yml"
+----
+
+Any positional or keyword arguments will be passed to the loader's constructor. _This only works when using `Registry#add_loader`, though._
+
+The next sections will help you learn about the supported loaders and how to build your own custom loader.
 
 ==== Environment
 
-Use `Etcher::Loaders::Environment` to load configuration information from your {environment_link}. By default, this object wraps `ENV`, uses an empty array for keys to include, and answers a filtered hash where all keys are downcased. _If you don't specify keys to include, then an empty hash is answered back_. Here's a few examples:
+Use `:environment` or `Etcher::Loaders::Environment` to load configuration information from your {environment_link}. By default, this object wraps `ENV`, uses an empty array for included keys, and answers a filtered hash where all keys are downcased. _If you don't specify keys to include, then an empty hash is answered back_. Here's a few examples:
 
 [source,ruby]
 ----
@@ -468,7 +486,48 @@ etcher = Etcher.new(registry)
 etcher.call
 ----
 
-If you'd like prebuilt transformers, the following details what is supplied by this gem.
+For convenience, all transformers -- only packaged with this gem -- can be registered by symbol instead of constant/instance. Example:
+
+[source,ruby]
+----
+registry = Etcher::Registry.new
+
+# String
+registry.add_transformer :string, :project_uri
+
+# Time
+registry.add_transformer :time
+----
+
+Any positional or keyword arguments will be passed to the transformers's constructor. _This only works when using `Registry#add_transformer`, though._ The following sections provide more details on each.
+
+==== String
+
+Use `Etcher::Transformers::String` to transform any key in your configuration by using the configuration's existing keys. Example:
+
+[source,ruby]
+----
+attributes = {
+  organization_uri: "https://acme.io",
+  project_name: "test",
+  project_uri: "%<organization_uri>s/projects/%<project_name>s"
+}
+
+transformer = Etcher::Transformers::String.new :project_uri
+
+transformer.call attributes
+# Success(
+  {
+    organization_uri: "https://acme.io",
+    project_name: "test",
+    project_uri: "https://acme.io/projects/test"
+  }
+)
+
+attributes.delete :project_name
+transformer.call attributes
+# Failure("Unable to transform :project_uri, missing specifier: \"<project_name>\".")
+----
 
 ==== Time
 
