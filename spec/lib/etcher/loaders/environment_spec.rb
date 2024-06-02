@@ -5,9 +5,9 @@ require "spec_helper"
 RSpec.describe Etcher::Loaders::Environment do
   include Dry::Monads[:result]
 
-  subject(:loader) { described_class.new source: }
+  subject(:loader) { described_class.new attributes }
 
-  let :source do
+  let :attributes do
     {
       "HOME" => "/Users/test",
       "RACK_ENV" => "test",
@@ -16,26 +16,26 @@ RSpec.describe Etcher::Loaders::Environment do
   end
 
   describe "#call" do
-    it "answers empty hash with empty includes" do
+    it "answers empty hash by default" do
       expect(loader.call).to eq(Success({}))
     end
 
-    it "answers filtered hash with matching includes" do
-      loader = described_class.new(%w[HOME USER], source:)
+    it "answers filtered, empty hash with no matches" do
+      loader = described_class.new attributes, only: "user"
+      expect(loader.call).to eq(Success({}))
+    end
+
+    it "answers filtered hash with matches" do
+      loader = described_class.new attributes, only: %w[HOME USER]
       expect(loader.call).to eq(Success("home" => "/Users/test", "user" => "test"))
     end
 
-    it "answers downcased keys with matching includes" do
-      loader = described_class.new(%w[HOME RACK_ENV USER], source:)
+    it "answers filtered, downcased hash with matches" do
+      loader = described_class.new attributes, only: %w[HOME RACK_ENV USER]
 
       expect(loader.call).to eq(
         Success("home" => "/Users/test", "rack_env" => "test", "user" => "test")
       )
-    end
-
-    it "answers empty hash with no matching includes" do
-      loader = described_class.new("user", source:)
-      expect(loader.call).to eq(Success({}))
     end
   end
 end

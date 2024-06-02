@@ -9,16 +9,16 @@ module Etcher
     class Environment
       include Dry::Monads[:result]
 
-      def initialize includes = Core::EMPTY_ARRAY, source: ENV
-        @includes = Array includes
-        @source = source
+      def initialize attributes = ENV, only: Core::EMPTY_ARRAY
+        @attributes = attributes
+        @only = Array only
       end
 
-      def call = Success source.slice(*includes).transform_keys(&:downcase)
+      def call = Success attributes.slice(*only).transform_keys(&:downcase)
 
       private
 
-      attr_reader :includes, :source
+      attr_reader :attributes, :only
     end
   end
 end
