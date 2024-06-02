@@ -16,21 +16,21 @@ module Etcher
     end
 
     def call(**overrides)
-      load(overrides.symbolize_keys!).then { |attributes| transform attributes }
-                                     .bind { |attributes| validate attributes }
-                                     .bind { |attributes| model attributes }
+      load.then { |attributes| transform attributes }
+          .fmap { |attributes| attributes.merge! overrides.symbolize_keys! }
+          .bind { |attributes| validate attributes }
+          .bind { |attributes| model attributes }
     end
 
     private
 
     attr_reader :registry
 
-    def load overrides
+    def load
       registry.loaders
               .map { |loader| loader.call.fmap { |pairs| pairs.flatten_keys.symbolize_keys! } }
               .each
               .with_object({}) { |attributes, all| attributes.bind { |body| all.merge! body } }
-              .merge!(overrides.flatten_keys)
               .then { |attributes| Success attributes }
     end
 

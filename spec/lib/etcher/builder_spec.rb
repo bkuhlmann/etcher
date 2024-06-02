@@ -20,12 +20,12 @@ RSpec.describe Etcher::Builder do
       expect(builder.call.success.frozen?).to be(true)
     end
 
-    it "answers overrides (symbols) of defaults" do
+    it "answers symbol overrides" do
       attributes = {name: "test", label: "Test"}
       expect(builder.call(**attributes)).to eq(Success(attributes))
     end
 
-    it "answers overrides (strings) of defaults" do
+    it "answers string overrides" do
       attributes = {"name" => "test", "label" => "Test"}
       expect(builder.call(**attributes)).to eq(Success(name: "test", label: "Test"))
     end
@@ -71,14 +71,14 @@ RSpec.describe Etcher::Builder do
       expect(builder.call).to eq(Success(name: "one", test_name: "four"))
     end
 
-    it "answers last nested override key with loaders and overrides" do
+    it "answers last loader key with multiple loaders and overrides" do
       registry = Etcher::Registry.new
       registry.add_loader :json, SPEC_ROOT.join("support/fixtures/three.json")
       registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
-      result = builder.call test: {name: "ein"}
+      result = builder.call test_name: "one", other: "two"
 
-      expect(result).to eq(Success({test_name: "ein"}))
+      expect(result).to eq(Success({test_name: "one", other: "two"}))
     end
 
     it "answers record for Data model" do
@@ -115,6 +115,16 @@ RSpec.describe Etcher::Builder do
       )
     end
 
+    it "answers record for custom loaders, transforms, contract, and model" do
+      registry = Etcher::Registry[contract:, model:]
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/one.json")
+      registry.add_transformer(-> pairs { Success pairs.merge!(name: pairs[:name].upcase) })
+      registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
+      builder = described_class.new registry
+
+      expect(builder.call).to eq(Success(model[name: "ONE!"]))
+    end
+
     it "answers record for custom loaders, transforms, overrides, contract, and model" do
       registry = Etcher::Registry[contract:, model:]
       registry.add_loader :json, SPEC_ROOT.join("support/fixtures/one.json")
@@ -122,7 +132,7 @@ RSpec.describe Etcher::Builder do
       registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
       builder = described_class.new registry
 
-      expect(builder.call(name: "test")).to eq(Success(model[name: "TEST!"]))
+      expect(builder.call(name: "test")).to eq(Success(model[name: "test"]))
     end
   end
 end
