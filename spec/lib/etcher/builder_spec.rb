@@ -46,8 +46,8 @@ RSpec.describe Etcher::Builder do
 
     it "answers last loader key with multiple loaders" do
       registry = Etcher::Registry.new
-      registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/one.json"))
-      registry.add_loader Etcher::Loaders::YAML.new(SPEC_ROOT.join("support/fixtures/two.yaml"))
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/one.json")
+      registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/two.yaml")
       builder = described_class.new registry
 
       expect(builder.call).to eq(Success(name: "two"))
@@ -55,8 +55,8 @@ RSpec.describe Etcher::Builder do
 
     it "answers last nested loader key with multiple loaders" do
       registry = Etcher::Registry.new
-      registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/three.json"))
-      registry.add_loader Etcher::Loaders::YAML.new(SPEC_ROOT.join("support/fixtures/four.yaml"))
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/three.json")
+      registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
 
       expect(builder.call).to eq(Success(test_name: "four"))
@@ -64,8 +64,8 @@ RSpec.describe Etcher::Builder do
 
     it "answers mixed keys with multiple loaders" do
       registry = Etcher::Registry.new
-      registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/one.json"))
-      registry.add_loader Etcher::Loaders::YAML.new(SPEC_ROOT.join("support/fixtures/four.yaml"))
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/one.json")
+      registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
 
       expect(builder.call).to eq(Success(name: "one", test_name: "four"))
@@ -73,8 +73,8 @@ RSpec.describe Etcher::Builder do
 
     it "answers last nested override key with loaders and overrides" do
       registry = Etcher::Registry.new
-      registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/three.json"))
-      registry.add_loader Etcher::Loaders::YAML.new(SPEC_ROOT.join("support/fixtures/four.yaml"))
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/three.json")
+      registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
       result = builder.call test: {name: "ein"}
 
@@ -117,7 +117,7 @@ RSpec.describe Etcher::Builder do
 
     it "answers record for custom loaders, transforms, overrides, contract, and model" do
       registry = Etcher::Registry[contract:, model:]
-      registry.add_loader Etcher::Loaders::JSON.new(SPEC_ROOT.join("support/fixtures/one.json"))
+      registry.add_loader :json, SPEC_ROOT.join("support/fixtures/one.json")
       registry.add_transformer(-> pairs { Success pairs.merge!(name: pairs[:name].upcase) })
       registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
       builder = described_class.new registry
