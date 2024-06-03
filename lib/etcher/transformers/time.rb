@@ -14,8 +14,8 @@ module Etcher
       end
 
       def call attributes
-        attributes.fetch(key) { fallback }
-                  .then { |value| Success attributes.merge!(key => value) }
+        attributes.fetch(key) { attributes.merge! key => fallback }
+        Success attributes
       end
 
       private
