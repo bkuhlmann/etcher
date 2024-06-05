@@ -48,7 +48,7 @@ module Etcher
     end
 
     def model attributes
-      Success registry.model[**attributes.to_h].freeze
+      Success registry.model[**attributes.to_h]
     rescue ArgumentError => error
       Failure step: __method__, payload: "#{error.message.capitalize}."
     end

@@ -16,10 +16,6 @@ RSpec.describe Etcher::Builder do
       expect(builder.call).to eq(Success({}))
     end
 
-    it "answers frozen hash with defaults" do
-      expect(builder.call.success.frozen?).to be(true)
-    end
-
     it "answers symbol overrides" do
       attributes = {name: "test", label: "Test"}
       expect(builder.call(**attributes)).to eq(Success(attributes))
