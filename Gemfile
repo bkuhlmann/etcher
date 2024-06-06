@@ -21,7 +21,6 @@ group :test do
   gem "dry-schema", "~> 1.1"
   gem "guard-rspec", "~> 4.7", require: false
   gem "rspec", "~> 3.13"
-  gem "tone", "~> 1.0"
 end
 
 group :tools do
