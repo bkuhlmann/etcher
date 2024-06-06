@@ -10,35 +10,33 @@ module Etcher
 
     using Refinements::Array
 
-    def initialize registry = Registry.new, kernel: Kernel, logger: LOGGER
+    def initialize registry = Registry.new, logger: LOGGER
       @builder = Builder.new registry
-      @kernel = kernel
       @logger = logger
     end
 
     def call(**overrides)
       case builder.call(**overrides)
         in Success(attributes) then attributes
-        in Failure(step:, payload: String => payload)
-          logger.fatal { "Build failure: #{step.inspect}. #{payload}" }
-          kernel.abort
-        in Failure(step:, payload: Hash => payload) then log_and_abort payload
-        else fail StandardError, "Unable to parse configuration."
+        in Failure(step:, constant:, payload: String => payload)
+          logger.abort "#{step.capitalize} failure (#{constant}). #{payload}"
+        in Failure(step:, constant:, payload: Hash => payload)
+          log_and_abort step, constant, payload
+        in Failure(String => message) then logger.abort message
+        else logger.abort "Unable to parse failure."
       end
     end
 
     private
 
-    attr_reader :builder, :kernel, :logger
+    attr_reader :builder, :logger
 
-    def log_and_abort errors
-      logger.fatal do
-        details = errors.map { |key, message| "  - #{key} #{message.to_sentence}\n" }
-                        .join
-        "Unable to load configuration due to the following issues:\n#{details}"
-      end
+    def log_and_abort step, constant, errors
+      details = errors.map { |key, message| "  - #{key} #{message.to_sentence}\n" }
+                      .join
 
-      kernel.abort
+      logger.abort "#{step.capitalize} failure (#{constant}). " \
+                   "Unable to load configuration:\n#{details}"
     end
   end
 end

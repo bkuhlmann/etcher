@@ -2,5 +2,4 @@
 
 RSpec.shared_context "with application dependencies" do
   let(:logger) { Cogger.new id: :etcher, io: StringIO.new, level: :debug }
-  let(:kernel) { class_spy Kernel }
 end
