@@ -15,33 +15,27 @@ module Etcher
       super
     end
 
-    def add_loader(loader, *, **)
-      if loader.is_a? Symbol
-        self.class.find(:Loaders, loader).then { |constant| loaders.append constant.new(*, **) }
-      else
-        loaders.append loader
-      end
-
-      self
-    end
+    def add_loader(loader, ...) = add(loader, :Loaders, ...)
 
     def remove_loader(index) = remove index, loaders
 
-    def add_transformer(transformer, *, **)
-      if transformer.is_a? Symbol
-        self.class.find(:Transformers, transformer).then do |constant|
-          transformers.append constant.new(*, **)
-        end
-      else
-        transformers.append transformer
-      end
-
-      self
-    end
+    def add_transformer(transformer, ...) = add(transformer, :Transformers, ...)
 
     def remove_transformer(index) = remove index, transformers
 
     private
+
+    def add(item, namespace, ...)
+      collection = __send__ namespace.downcase
+
+      if item.is_a? Symbol
+        self.class.find(namespace, item).then { |kind| collection.append kind.new(...) }
+      else
+        collection.append item
+      end
+
+      self
+    end
 
     def remove index, collection
       collection.delete_at index
