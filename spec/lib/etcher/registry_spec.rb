@@ -55,6 +55,19 @@ RSpec.describe Etcher::Registry do
     end
   end
 
+  describe "#remove_loader" do
+    before { registry.add_loader :json, "test.json" }
+
+    it "removes loader" do
+      registry.remove_loader 0
+      expect(registry.loaders).to eq([])
+    end
+
+    it "answers itself" do
+      expect(registry.remove_loader(0)).to be_a(described_class)
+    end
+  end
+
   describe "#loaders" do
     it "answers default loaders" do
       expect(registry.loaders).to eq([])
@@ -76,6 +89,19 @@ RSpec.describe Etcher::Registry do
 
     it "answers itself" do
       expect(registry.add_transformer(Object)).to be_a(described_class)
+    end
+  end
+
+  describe "#remove_transformer" do
+    before { registry.add_transformer :time, :now }
+
+    it "removes transformer" do
+      registry.remove_transformer 0
+      expect(registry.transformers).to eq([])
+    end
+
+    it "answers itself" do
+      expect(registry.remove_transformer(0)).to be_a(described_class)
     end
   end
 
