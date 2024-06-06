@@ -25,6 +25,8 @@ module Etcher
       self
     end
 
+    def remove_loader(index) = remove index, loaders
+
     def add_transformer(transformer, *, **)
       if transformer.is_a? Symbol
         self.class.find(:Transformers, transformer).then do |constant|
@@ -34,6 +36,15 @@ module Etcher
         transformers.append transformer
       end
 
+      self
+    end
+
+    def remove_transformer(index) = remove index, transformers
+
+    private
+
+    def remove index, collection
+      collection.delete_at index
       self
     end
   end
