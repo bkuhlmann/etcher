@@ -5,11 +5,10 @@ require "spec_helper"
 RSpec.describe Etcher::Resolver do
   include Dry::Monads[:result]
 
-  subject(:resolver) { described_class.new registry, logger:, kernel: }
+  subject(:resolver) { described_class.new registry, logger: }
 
   let(:registry) { Etcher::Registry.new }
-
-  include_context "with application dependencies"
+  let(:logger) { instance_spy Cogger::Hub }
 
   describe "#call" do
     let :contract do
@@ -23,61 +22,73 @@ RSpec.describe Etcher::Resolver do
       expect(resolver.call).to eq({})
     end
 
+    context "with load failure" do
+      let :registry do
+        Etcher::Registry[
+          loaders: [proc { Failure step: :load, constant: "Test", payload: "Danger!" }]
+        ]
+      end
+
+      it "logs and aborts" do
+        resolver.call
+        expect(logger).to have_received(:abort).with("Load failure (Test). Danger!")
+      end
+    end
+
+    context "with transform failure" do
+      let :registry do
+        Etcher::Registry[
+          transformers: [proc { Failure step: :transform, constant: "Test", payload: "Danger!" }]
+        ]
+      end
+
+      it "logs and aborts" do
+        resolver.call
+        expect(logger).to have_received(:abort).with("Transform failure (Test). Danger!")
+      end
+    end
+
     context "with contract failure" do
       let(:registry) { Etcher::Registry[contract:] }
 
-      before { resolver.call }
+      it "logs and aborts" do
+        resolver.call
 
-      it "logs fatal details" do
-        expect(logger.reread).to have_color(
-          Cogger.color,
-          ["🔥 "],
-          [
-            "Unable to load configuration due to the following issues:\n  - name is " \
-            "missing\n  - label is missing\n",
-            :bold,
-            :white,
-            :on_red
-          ],
-          ["\n"]
+        expect(logger).to have_received(:abort).with(
+          "Validate failure (Etcher::Builder). Unable to load configuration:\n  " \
+          "- name is missing\n  " \
+          "- label is missing\n"
         )
-      end
-
-      it "aborts" do
-        expect(kernel).to have_received(:abort)
       end
     end
 
     context "with model failure" do
       let(:registry) { Etcher::Registry[contract:, model: Data.define] }
 
-      before { resolver.call name: "test", label: "Test" }
+      it "logs and aborts" do
+        resolver.call name: "test", label: "Test"
 
-      it "logs fatal details" do
-        expect(logger.reread).to have_color(
-          Cogger.color,
-          ["🔥 "],
-          [
-            "Build failure: :model. Unknown keywords: :name, :label.",
-            :bold,
-            :white,
-            :on_red
-          ],
-          ["\n"]
+        expect(logger).to have_received(:abort).with(
+          "Model failure (Etcher::Builder). Unknown keywords: :name, :label."
         )
-      end
-
-      it "aborts" do
-        expect(kernel).to have_received(:abort)
       end
     end
 
-    context "with invalid builder" do
-      let(:registry) { Etcher::Registry[transformers: [proc { Failure ["Danger!"] }]] }
+    context "with string failure" do
+      let(:registry) { Etcher::Registry[transformers: [proc { Failure "Danger!" }]] }
 
-      it "fails" do
-        expectation = proc { resolver.call }
-        expect(&expectation).to raise_error(StandardError, "Unable to parse configuration.")
+      it "logs and aborts" do
+        resolver.call
+        expect(logger).to have_received(:abort).with("Danger!")
+      end
+    end
+
+    context "with unknown failure" do
+      let(:registry) { Etcher::Registry[transformers: [proc { Failure :danger }]] }
+
+      it "logs and aborts" do
+        resolver.call
+        expect(logger).to have_received(:abort).with("Unable to parse failure.")
       end
     end
   end
