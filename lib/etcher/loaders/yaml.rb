@@ -31,7 +31,7 @@ module Etcher
       def load
         content = ::YAML.safe_load_file path
 
-        return Success content if content.is_a? Hash
+        return Success content if content.is_a? ::Hash
 
         debug_and_fallback "Invalid content: #{content.inspect}. Using fallback."
       end
