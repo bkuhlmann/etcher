@@ -63,7 +63,7 @@ RSpec.describe Etcher::Registry do
 
   describe "#add_transformer" do
     it "adds transformer (symbol)" do
-      registry.add_transformer :time
+      registry.add_transformer :time, :now
       expect(registry.transformers).to contain_exactly(kind_of(Etcher::Transformers::Time))
     end
 

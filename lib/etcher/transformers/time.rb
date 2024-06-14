@@ -8,7 +8,7 @@ module Etcher
     class Time
       include Dry::Monads[:result]
 
-      def initialize key = :loaded_at, fallback: ::Time.now.utc
+      def initialize key, fallback: ::Time.now.utc
         @key = key
         @fallback = fallback
       end

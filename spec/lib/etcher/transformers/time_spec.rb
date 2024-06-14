@@ -5,7 +5,7 @@ require "spec_helper"
 RSpec.describe Etcher::Transformers::Time do
   include Dry::Monads[:result]
 
-  subject(:transformer) { described_class.new fallback: at }
+  subject(:transformer) { described_class.new :loaded_at, fallback: at }
 
   let(:at) { Time.now.utc }
 
@@ -19,7 +19,7 @@ RSpec.describe Etcher::Transformers::Time do
     end
 
     it "answers fallback without attributes or custom time" do
-      transformer = described_class.new
+      transformer = described_class.new :loaded_at
       expect(transformer.call({}).success).to match(loaded_at: kind_of(Time))
     end
 
