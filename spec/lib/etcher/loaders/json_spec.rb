@@ -20,16 +20,6 @@ RSpec.describe Etcher::Loaders::JSON do
       expect(loader.call).to eq(Success("name" => "test"))
     end
 
-    it "answers empty hash when empty" do
-      path.touch
-      expect(loader.call).to eq(Success({}))
-    end
-
-    it "answers empty hash with invalid content" do
-      path.write "Curabitur eleifend wisi iaculis ipsum."
-      expect(loader.call).to eq(Success({}))
-    end
-
     it "logs nil path" do
       loader = described_class.new(nil, logger:)
       loader.call
@@ -44,11 +34,40 @@ RSpec.describe Etcher::Loaders::JSON do
       expect(logger.reread).to match(/🔎.+Invalid path: "bogus.json". Using fallback./)
     end
 
-    it "logs invalid content" do
-      path.write "Danger"
-      loader.call
+    it "fails with nil content" do
+      path.touch
 
-      expect(logger.reread).to include("unexpected token at 'Danger'. Path: #{path.to_s.inspect}")
+      expect(loader.call).to eq(
+        Failure(
+          step: :load,
+          constant: described_class,
+          payload: "File is empty: #{path.to_s.inspect}."
+        )
+      )
+    end
+
+    it "fails with empty content" do
+      path.write "\n"
+
+      expect(loader.call).to eq(
+        Failure(
+          step: :load,
+          constant: described_class,
+          payload: "File is empty: #{path.to_s.inspect}."
+        )
+      )
+    end
+
+    it "fails with invalid content" do
+      path.write "Danger!"
+
+      expect(loader.call).to eq(
+        Failure(
+          step: :load,
+          constant: described_class,
+          payload: %(Invalid content: "Danger!". Path: #{path.to_s.inspect}.)
+        )
+      )
     end
   end
 end

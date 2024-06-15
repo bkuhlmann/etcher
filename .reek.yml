@@ -12,4 +12,4 @@ detectors:
       - Etcher::Builder#transform
   TooManyStatements:
     exclude:
-      - Etcher::Builder#load
+      - Etcher::Loaders::YAML#call

@@ -20,8 +20,10 @@ module Etcher
 
         Success attributes.merge(key => format(value, **attributes, **ancillary))
       rescue KeyError => error
-        Failure "Unable to transform #{key.inspect}, missing specifier: " \
-                "\"#{error.message[/<.+>/]}\"."
+        Failure step: :transform,
+                constant: self.class,
+                payload: "Unable to transform #{key.inspect}, missing specifier: " \
+                         "\"#{error.message[/<.+>/]}\"."
       end
 
       private

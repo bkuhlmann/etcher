@@ -30,7 +30,11 @@ RSpec.describe Etcher::Transformers::String do
       attributes.delete :project
 
       expect(transformer.call(attributes)).to eq(
-        Failure(%(Unable to transform :uri, missing specifier: "<project>".))
+        Failure(
+          step: :transform,
+          constant: described_class,
+          payload: %(Unable to transform :uri, missing specifier: "<project>".)
+        )
       )
     end
 
