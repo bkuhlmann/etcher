@@ -1,5 +1,28 @@
 = Versions
 
+== 2.0.0 (2024-07-05)
+
+* ✅ Fixed resolver to catch all failure formats - Brooke Kuhlmann
+* ✅ Fixed step-based failure details - Brooke Kuhlmann
+* ✅ Fixed time transformer performance - Brooke Kuhlmann
+* 🟢 Added basename transformer - Brooke Kuhlmann
+* 🟢 Added hash loader - Brooke Kuhlmann
+* 🟢 Added registry loader and transformer removal - Brooke Kuhlmann
+* 🟢 Added root transformer - Brooke Kuhlmann
+* 🟢 Added version release notes - Brooke Kuhlmann
+* 🔼 Updated builder to process overrides after transformations - Brooke Kuhlmann
+* 🔼 Updated environment loader initialization parameters - Brooke Kuhlmann
+* 🔼 Updated string transformer as format transformer - Brooke Kuhlmann
+* 🔼 Updated to Caliber 0.58.0 - Brooke Kuhlmann
+* 🔼 Updated to Cogger 0.21.0 - Brooke Kuhlmann
+* 🔼 Updated to IRB Kit 0.3.0 - Brooke Kuhlmann
+* 🔼 Updated to Refinements 12.5.0 - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.3 - Brooke Kuhlmann
+* ⛔️ Removed Tone gem - Brooke Kuhlmann
+* ⛔️ Removed time transformer default key - Brooke Kuhlmann
+* 🔁 Refactored builder spec to use symbolized loaders - Brooke Kuhlmann
+* 🔁 Refactored registry add implementation - Brooke Kuhlmann
+
 == 1.6.0 (2024-05-30)
 
 * 🟢 Added finder - Brooke Kuhlmann

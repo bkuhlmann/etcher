@@ -15,6 +15,7 @@
 :pipeable_link: link:https://alchemists.io/projects/pipeable[Pipeable]
 :runcom_link: link:https://alchemists.io/projects/runcom[Runcom]
 :sod_link: link:https://alchemists.io/projects/sod[Sod]
+:string_formats_link: link:https://docs.ruby-lang.org/en/3.3/format_specifications_rdoc.html[String Formats]
 :struct_link: link:https://alchemists.io/articles/ruby_structs[Struct]
 :versionaire_link: link:https://alchemists.io/projects/versionaire[Versionaire]
 :xdg_link: link:https://alchemists.io/projects/xdg[XDG]
@@ -28,7 +29,7 @@ ____
 [Use] strong acid or mordant to cut into the unprotected parts of a metal surface to create a design in intaglio (incised) in the metal.
 ____
 
-By using Etcher, you have a reliable way to load default configurations (i.e. {environment_link}, {json_link}, {yaml_link}) which can be validated and etched into _frozen_ records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application which doesn't violate the {demeter_link}. This comes complete with transformations and validations all via a simple Object API and pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
+By using Etcher, you have a reliable way to load default configurations (i.e. {hash_link}, {environment_link}, {json_link}, {yaml_link}) which can be validated and etched into _frozen_ records (i.e. {hash_link}, {data_link}, {struct_link}) for consumption within your application which doesn't violate the {demeter_link}. This comes complete with loaders, transformations, and validations all via a simple Object API that pairs well with the {xdg_link}, {runcom_link}, and {sod_link} gems.
 
 toc::[]
 
@@ -36,7 +37,7 @@ toc::[]
 
 * Supports contracts which respond to `#call` to validate a {hash_link} before building the final record. Pairs well with the {dry_schema_link} and {dry_validation_link} gems.
 * Supports models which respond to `.[]` for consuming a splatted {hash_link} to instantiate new records. Pairs well with primitives such as: {hash_link}, {data_link}, and {struct_link}.
-* Supports loading of default configurations from the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
+* Supports loading of default configurations from a {hash_link}, the {environment_link}, a {json_link} configuration, a {yaml_link} configuration, or anything that can answer a hash.
 * Supports multiple transformations which can process loaded configuration hashes and answer a transformed hash.
 * Supports {hash_link} overrides as a final customization which is handy for Command Line Interfaces (CLIs), as aided by {sod_link}, or anything that might require user input at runtime.
 
@@ -133,16 +134,16 @@ While this is a more advanced use case, you'll usually only need to register a c
 As hinted at above, the complete sequence of steps are performed in the order listed:
 
 . *Load*: Each loader, if any, is called and merged with the previous loader to build initial attributes.
-. *Override*: Any overrides are merged with the result of the last loader to produce updated attributes. ⚠️ _In Version 2.0.0, this step will happen after the Transform step._
 . *Transform*: Each transformer, if any, is called to transform and manipulate the attributes.
+. *Override*: Overrides, if any, are merged with the result of the last transformer so you can fine tune the data as desired.
 . *Validate*: The contract is called to validate the attributes as previously loaded, overwritten, and transformed.
 . *Model*: The model consumes the attributes of the validated contract and creates a new record for you to use as needed.
 
-You can use the above steps as a reference when using this gem. Each step is explained in greater detail below.
+Each step _mutates_ the attributes of the previous step in order to produce a record (success) or error (failure). You can use the above steps as a reference when using this gem. Each step is explained in greater below.
 
 === Registry
 
-The registry is provided as a way to register any/all complexity for before creating a new Etcher instance. Here's what you get by default:
+The registry provides a way to register any/all behavior for before creating a new Etcher instance. Here's what you get by default:
 
 [source,ruby]
 ----
@@ -179,7 +180,7 @@ Contracts are a critical piece of this workflow as they provide a way to validat
 
 * `#call`: Must be able to consume a {hash_link} and answer an object which can respond to `#to_monad`.
 
-The best gems which adhere to this interface are: {dry_schema_link} and {dry_validation_link}. You'll also want to make sure the {dry_monads_link} extensions are loaded, as briefly shown earlier, so the result will respond to `#to_monad`. Here's how to enable monad support if using both gems:
+Both {dry_schema_link} and {dry_validation_link} respond to the `#to_monad` message. Ensure the {dry_monads_link} extensions are loaded too, as briefly shown earlier, so the result will respond to the `#to_monad` message. Here's how to enable monad support if using both gems:
 
 [source,ruby]
 ----
@@ -209,7 +210,7 @@ etcher.call from: "Mork", to: "Mindy"
 # Success({:from=>"Mork", :to=>"Mindy"})
 ----
 
-Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record and it would be nice to structured record which will be explained shortly.
+Here you can see the power of using a contract to validate your data both as a failure and a success. Unfortunately, with the success, we only get a {hash_link} as a record but it would be better to have a data structure which will be explained shortly.
 
 === Types
 
@@ -279,7 +280,7 @@ Notice we get an failure if all attributes are not provided but if we supply the
 
 === Loaders
 
-Loaders are a great way to load a _default_ configuration for your application which can be in multiple formats. Loaders can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
+Loaders are a great way to load a _default_ configuration for your application which can be in multiple formats. Loaders can either be defined when creating a new registry instance or added after the fact. Here are a couple examples:
 
 [source,ruby]
 ----
@@ -292,8 +293,9 @@ registry = Etcher::Registry.new.add_loader MyLoader.new
 
 There are a few guidelines to using them:
 
-* They must respond to `#call` with no arguments.
-* All keys are symbolized which helps streamline merging and overriding values from the same keys across multiple configurations.
+* All loaders must respond to `#call` with no arguments.
+* All loaders must answer either a success with attributes (i.e. `Success attributes`) or a failure with details about the failure (i.e. `Failure step: :load, constant: MyLoader, payload: "My error message.`)
+* All keys are symbolized after the loader is called which helps streamline merging and overriding values from the same keys across multiple configurations.
 * All nested keys will be flattened after being loaded. This means a key structure of `{demo: {one: "test"}}` will be flattened to `demo_one: "test"` which adheres to the {demeter_link} when a new recored is _etched_ for you.
 * The order in which you define your loaders matters. This means the first loader defined will be processed first, then the second, and so forth. Loaders defined last take precedence over previously defined loaders when overriding the same keys.
 
@@ -341,6 +343,25 @@ loader.call
 
 This loader is great for pulling from environment variables as a fallback configuration for your application.
 
+==== Hash
+
+Use `:hash` or `Etcher::Loaders::Hash` to load in-memory attributes. By default, this loader will answer an empty hash if not supplied with any attributes. Here's a few examples:
+
+[source,ruby]
+----
+# Default behavior.
+loader = Etcher::Loaders::Hash.new
+loader.call
+# Success({})
+
+# With custom attributes
+loader = Etcher::Loaders::Hash.new one: 1, two: 2
+loader.call
+# Success({:one=>1, :two=>2})
+----
+
+This loader is great for adding custom attributes, overriding/adjusting attributes from a previous loader, or customizing attributes for testing purposes within a test suite.
+
 ==== JSON
 
 Use `Etcher::Loaders::JSON` to load configuration information from a {json_link} file. Here's how to use this loader (using a file that doesn't exist):
@@ -362,9 +383,12 @@ loader = Etcher::Loaders::JSON.new "your/path/to/configuration.json",
 loader.call  # Success({})
 ----
 
-Otherwise, if the file exists with content, you'll get a `Hash` wrapped as a `Success`.
+If the file exists with _valid_ content, you'll get a `Hash` wrapped as a `Success`. In situations in which the file doesn't exist, you'll get a `Success` with an empty hash and debug information logged instead. Any failures will be provided with step, constant, and payload details. Example:
 
-ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
+[source,ruby]
+----
+Failure step: :load, constant: Etcher::Loaders::JSON, payload: "Danger!"
+----
 
 ==== YAML
 
@@ -387,9 +411,12 @@ loader = Etcher::Loaders::YAML.new "your/path/to/configuration.yml",
 loader.call  # Success({})
 ----
 
-Otherwise, if the file exists with content, you'll get a `Hash` wrapped as a `Success`.
+If the file exists with _valid_ content, you'll get a `Hash` wrapped as a `Success`. In situations in which the file doesn't exist, you'll get a `Success` with an empty hash and debug information logged instead. Any failures will be provided with step, constant, and payload details. Example:
 
-ℹ️ The logger is only used to log debug information when issues are encountered when reading from the file. This is done to reduce noise in your console when a configuration might have issues and can safely revert to the fallback in order to load the rest of the configuration.
+[source,ruby]
+----
+Failure step: :load, constant: Etcher::Loaders::YAML, payload: "Danger!"
+----
 
 ==== Custom
 
@@ -402,26 +429,31 @@ require "dry/monads"
 class Demo
   include Dry::Monads[:result]
 
-  def initialize fallback: {}
-    @fallback = fallback
+  def initialize processor: Processor.new
+    @processor = processor
   end
 
-  def call = Success fallback
+  def call
+    Success processor.call
+  rescue ProcessorError => error
+    Failure step: :load, constant: self.class, payload: error.message
+  end
 
   private
 
-  attr_reader :fallback
+  attr_reader :processor
 end
 
-etcher = Etcher::Registry[loaders: [Demo.new]].then { |registry| Etcher.new registry }
-etcher.call  # Success({})
+registry = Etcher::Registry[loaders: [Demo.new]]
+
+Etcher.new(registry).call
 ----
 
-While the above isn't super useful since it only answers whatever you provide as fallback information, you can see there is little effort required to implement and customize as desired.
+While the above assumes you have some kind of `Processor` for loading attributes, you can see there is little effort required to implement and customize as desired.
 
 === Transformers
 
-Transformers are great for modifying specific keys and values. They give you finer grained control over your configuration and are the last step before validating and creating an associated record of your configuration. Transformers can either be defined when creating a new registry instance or added after the fact. Here are a few examples:
+Transformers are great for _mutating_ specific keys and values. They give you fine grained customization over your configuration. Transformers can either be defined when creating a new registry instance or added after the fact. Here are a couple examples:
 
 [source,ruby]
 ----
@@ -436,8 +468,9 @@ The guidelines for using transformers are:
 
 * They can be initialized with whatever requirements you need.
 * They must respond to `#call` which takes a required `attributes` positional argument and answers a modified version of these attributes (`Hash`) wrapped as a monad.
-* When using a proc/lambda, the first, _required_, parameter should be the `attributes` parameter followed by an _optional_ positional `key` parameter with a default value. This allows you to quickly refactor the key later while also reducing key duplication throughout your implementation.
-* When using a class, the `key` should be your first positional parameter with a default value. Additional parameters can be supplied after if desired.
+* They must answer either a success with attributes (i.e. `Success attributes`) or a failure with details about the failure (i.e. `Failure step: :transform, constant: MyTransformer, payload: "My error message.`)
+* When using a proc/lambda, the first, _required_, parameter should be the `attributes` parameter followed by a second positional `key` parameter.
+* When using a class, the `key` should be your first positional parameter. Additional parameters can be supplied after if desired.
 * The `attributes` passed to your transformer will have symbolized keys so you don't need to transform them further.
 
 For example, the following capitalizes all values (which may or may not be good depending on your data structure):
@@ -492,8 +525,8 @@ For convenience, all transformers -- only packaged with this gem -- can be regis
 ----
 registry = Etcher::Registry.new
 
-# String
-registry.add_transformer :string, :project_uri
+# Format
+registry.add_transformer :format, :project_uri
 
 # Time
 registry.add_transformer :time
@@ -501,9 +534,47 @@ registry.add_transformer :time
 
 Any positional or keyword arguments will be passed to the transformers's constructor. _This only works when using `Registry#add_transformer`, though._ The following sections provide more details on each.
 
-==== String
+==== Basename
 
-Use `Etcher::Transformers::String` to transform any key in your configuration by using the configuration's existing keys. Example:
+Use `Etcher::Transformers::Basename` to dynamically obtain the name of the current directory as a value for a key. This is handy for scripting or CLI purposes when needing to know the name of the current project you are working in. Example:
+
+[source,ruby]
+----
+transformer = Etcher::Transformers::Basename.new :demo
+transformer.call({})
+# Success({:demo=>"scratch"})
+
+transformer = Etcher::Transformers::Basename.new :demo, fallback: "undefined"
+transformer.call({})
+# Success({:demo=>"undefined"})
+
+transformer = Etcher::Transformers::Basename.new :demo
+transformer.call({demo: "defined"})
+# Success({:demo=>"defined"})
+----
+
+==== Root
+
+Use `Etcher::Transformers::Root` to dynamically obtain the current path as a value for a key. This is handy for obtaining the absolute path to a new or existing directory. Example:
+
+[source,ruby]
+----
+transformer = Etcher::Transformers::Root.new :demo
+transformer.call({})
+# Success({:demo=>#<Pathname:/Users/demo/Engineering/OSS/scratch>})
+
+transformer = Etcher::Transformers::Root.new :demo, fallback: "undefined"
+transformer.call({})
+# Success({:demo=>#<Pathname:/Users/demo/Engineering/undefined>})
+
+transformer = Etcher::Transformers::Root.new :demo
+transformer.call({demo: "defined"})
+# Success({:demo=>#<Pathname:/Users/demo/Engineering/defined>})
+----
+
+==== Format
+
+Use `Etcher::Transformers::Format` to transform any key's value by using the configuration's existing attributes to format the value of a specific key using the {string_formats_link} Specification. Example:
 
 [source,ruby]
 ----
@@ -513,9 +584,7 @@ attributes = {
   project_uri: "%<organization_uri>s/projects/%<project_name>s"
 }
 
-transformer = Etcher::Transformers::String.new :project_uri
-
-transformer.call attributes
+Etcher::Transformers::Format.new(:project_uri).call attributes
 # Success(
   {
     organization_uri: "https://acme.io",
@@ -526,53 +595,69 @@ transformer.call attributes
 
 attributes.delete :project_name
 transformer.call attributes
-# Failure("Unable to transform :project_uri, missing specifier: \"<project_name>\".")
+
+# Failure(
+#   {
+#     step: :transform,
+#     constant: Etcher::Transformers::Format,
+#     payload: "Unable to transform :project_uri, missing specifier: \"<project_name>\"."
+#   }
+# )
 ----
 
-==== Time
-
-Use `Etcher::Transformers::Time` to transform the `loaded_at` key in your configuration when you want to know the current time at which the configuration was loaded. Handy for situations where you need to calculate relative time or format time based on when your configuration was loaded.
-
-Even though `loaded_at` is the default key and `Time.now.utc` is the default fallback, you're not limited to using different keys and fallbacks. Example:
+You can also, safely, transform a value which _doesn't_ have string specifiers:
 
 [source,ruby]
 ----
-transformer = Etcher::Transformers::Time.new
-transformer.call({})
-# Success({:loaded_at=>2024-05-23 22:18:27.92767 UTC})
+Etcher::Transformers::Format.new(:version).call(version: "1.2.3")
+# Success({:version=>"1.2.3"})
+----
 
+Normally, you'd get a "too many arguments for format string" warning but this transformer detects and immediate skips formatting when no string specifiers are detected. This is handy for situations where your configuration supports values which may or may not need formatting.
+
+==== Time
+
+Use `Etcher::Transformers::Time` to transform the any key in your configuration when you want to know the current time at which the configuration was loaded. Handy for situations where you need to calculate relative time or format time based on when your configuration was loaded.
+
+You must supply a key and `Time.now.utc` is the default fallback. You can customize as desired. Example:
+
+[source,ruby]
+----
 transformer = Etcher::Transformers::Time.new :now
 transformer.call({})
-# Success({:now=>2024-05-23 22:18:49.93189 UTC})
+# Success({:now=>2024-06-15 22:43:29.178488 UTC})
 
 transformer = Etcher::Transformers::Time.new :now, fallback: Time.utc(2000, 1, 1)
 transformer.call({})
 # Success({:now=>2000-01-01 00:00:00 UTC})
 
-transformer = Etcher::Transformers::Time.new
-transformer.call({loaded_at: Time.utc(2000, 1, 1)})
-# Success({:loaded_at=>2000-01-01 00:00:00 UTC})
+transformer = Etcher::Transformers::Time.new :now
+transformer.call({now: Time.utc(2000, 1, 1)})
+# Success({:now=>2000-01-01 00:00:00 UTC})
 ----
 
 === Overrides
 
-Overrides are what you pass to the Etcher instance when called. Example:
+Overrides are what you pass to the Etcher instance when called. They allow you to override any values that were loaded and/or transformed. Example:
 
 [source,ruby]
 ----
 etcher = Etcher.new
-etcher.call name: "test", label: "Test"
 
+# With symbol keys.
+etcher.call name: "test", label: "Test"
+# Success({:name=>"test", :label=>"Test"})
+
+# With string keys.
+etcher.call "name" => "test", "label" => "Test"
 # Success({:name=>"test", :label=>"Test"})
 ----
 
-Overrides are applied _after_ any loaders are processed and _before_ any transformations. They are a nice way to deal with user input during runtime or provide any additional configuration not supplied by the loading of your default configuration while still allowing you to transform them if desired.
-
-⚠️ In Version 2.0.0, this step will be changed to occur _after_ the Transform step for maximum flexibility.
+Overrides are applied _after_ any transforms and _before_ validations. They are a nice way to deal with user input during runtime or provide additional attributes not supplied by the loading and/or transforming of your default configuration while ensuring they are validated properly. Any string keys will be transformed to symbol keys to ensure consistency and reduce issues when merged.
 
 === Resolver
 
-In situations where you'd like Etcher to handle the complete load, transform, validate, and build steps for you, then you can use the resolver. This is provided for use cases where you'd like Etcher to handle everything for you and abort if otherwise. Example:
+In situations where you'd like Etcher to handle the complete load, transform, override, validate, and model steps for you, then you can use the resolver. This is provided for use cases where you'd like Etcher to handle everything for you and abort if otherwise. Example:
 
 [source,ruby]
 ----
@@ -599,23 +684,22 @@ registry = Etcher::Registry.new(contract:, model:)
 
 Etcher.call registry
 
-# 🔥 Unable to load configuration due to the following issues:
+# 🛑 Etcher validate failure (Etcher::Builder). Unable to load configuration:
 #   - to is missing
 #   - from is missing
 
 Etcher.call registry, to: "Mindy"
 
-# 🔥 Unable to load configuration due to the following issues:
+# 🛑 Etcher validate failure (Etcher::Builder). Unable to load configuration:
 #   - from is missing
-
 
 registry = Etcher::Registry.new(model: Data.define(:name, :label))
 Etcher.call registry, to: "Mindy"
 
-# 🔥 Build failure: :record. Missing keywords: :name, :label.
+# 🛑 Etcher model failure (Etcher::Builder). Missing keywords: :name, :label.
 ----
 
-💡 When using a custom registry, make sure it's the first argument. All arguments afterwards can be any number of key/values overrides which is similar to how `Etcher.new` works.
+💡 When using a custom registry, make sure it's the first argument. Additional arguments can be supplied afterwards and they can be any number of key/value overrides which is similar to how `Etcher.new` works.
 
 == Development
 
@@ -639,7 +723,7 @@ bin/console
 
 The following illustrates the full sequences of events when _etching_ new records:
 
-image::https://alchemists.io/images/projects/etcher/doc/architecture.svg[Architecture Diagram]
+image::https://alchemists.io/images/projects/etcher/architecture.png[Architecture Diagram,1250,1071,role=focal_point]
 
 == Tests
 

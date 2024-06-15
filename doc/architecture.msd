@@ -6,45 +6,44 @@
 title "Etcher Architecture"
 
 participant Load
-participant Override
 participant Transform
+participant Override
 participant Validate
 participant Model
 participant Result
 
-Load->Load: Load.
+Load->Load: Iterate.
 
 note over Load
-  "Sequentially reduces default configurations into a single merged configuration."
+  "Sequentially loads all configurations into a single set of attributes."
 end note
 
-Load->Override: Transfer.
-
-Override->Transform: Override (optional).
-
-note over Override
-  "Merges specific overrides."
-end note
-
-Transform->Transform: Transform (optional).
+Load->Transform: Transfer.
+Transform->Transform: Iterate.
 
 note over Transform
-  "Sequentially transforms individual values within merged configuration."
+  "Sequentially transforms attributes."
 end note
 
-Transform->Validate: Transfer.
+Transform->Override: Transfer.
 
-Validate->Model: Validate
+note over Override
+  "Merges specific changes."
+end note
+
+Override->Validate: Transfer.
 
 note over Validate
   "Ensures attributes are valid."
 end note
 
-Model->Result: Record
+Validate->Model: Transfer.
 
 note over Model
-  "Converts attributes into a structured record."
+  "Models attributes as a single record."
 end note
+
+Model->Result: Respond.
 
 note over Result
   "Answers monad with record or errors."
