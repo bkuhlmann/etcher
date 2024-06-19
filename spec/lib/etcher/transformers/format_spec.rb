@@ -2,7 +2,7 @@
 
 require "spec_helper"
 
-RSpec.describe Etcher::Transformers::String do
+RSpec.describe Etcher::Transformers::Format do
   include Dry::Monads[:result]
 
   subject(:transformer) { described_class.new :uri }
@@ -36,6 +36,11 @@ RSpec.describe Etcher::Transformers::String do
           payload: %(Unable to transform :uri, missing specifier: "<project>".)
         )
       )
+    end
+
+    it "answers original attributes when there is nothing to format" do
+      attributes[:uri] = "https://test.io"
+      expect(transformer.call(attributes)).to eq(Success(attributes))
     end
 
     it "answers original attributes when key doesn't exist" do
