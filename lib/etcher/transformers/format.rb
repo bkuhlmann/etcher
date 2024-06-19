@@ -4,21 +4,22 @@ require "dry/monads"
 
 module Etcher
   module Transformers
-    # Formats given key using existing and/or ancillary attributes.
-    class String
+    # Formats given key using existing and/or placeholder attributes.
+    class Format
       include Dry::Monads[:result]
 
-      def initialize key, **ancillary
+      def initialize key, **pass_throughs
         @key = key
-        @ancillary = ancillary
+        @pass_throughs = pass_throughs
+        @pattern = /%<.+>s/o
       end
 
       def call attributes
         value = attributes[key]
 
-        return Success attributes unless value
+        return Success attributes unless value && value.match?(pattern)
 
-        Success attributes.merge(key => format(value, **attributes, **ancillary))
+        Success attributes.merge!(key => format(value, **attributes, **pass_throughs))
       rescue KeyError => error
         Failure step: :transform,
                 constant: self.class,
@@ -28,7 +29,7 @@ module Etcher
 
       private
 
-      attr_reader :key, :ancillary
+      attr_reader :key, :pass_throughs, :pattern
     end
   end
 end
