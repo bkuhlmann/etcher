@@ -43,6 +43,11 @@ RSpec.describe Etcher::Transformers::Format do
       expect(transformer.call(attributes)).to eq(Success(attributes))
     end
 
+    it "answers original attributes when key is nil" do
+      attributes[:uri] = nil
+      expect(transformer.call(attributes)).to eq(Success(attributes))
+    end
+
     it "answers original attributes when key doesn't exist" do
       expect(transformer.call({})).to eq(Success({}))
     end
