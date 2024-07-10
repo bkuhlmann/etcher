@@ -52,7 +52,21 @@ RSpec.describe Etcher::Transformers::Format do
       expect(transformer.call({})).to eq(Success({}))
     end
 
-    context "with ancillary attributes" do
+    context "with retainers" do
+      subject(:transformer) { described_class.new :text, :one, :two }
+
+      it "formats text with retainers preserved" do
+        expect(transformer.call({text: "Test: %<one>s, %<two>s"})).to eq(
+          Success(text: "Test: %<one>s, %<two>s")
+        )
+      end
+
+      it "formats text with retainers ignored" do
+        expect(transformer.call({text: "Test"})).to eq(Success(text: "Test"))
+      end
+    end
+
+    context "with mappings" do
       subject(:transformer) { described_class.new :text, tag_a: "A", tag_b: "B" }
 
       let :attributes do
@@ -63,7 +77,7 @@ RSpec.describe Etcher::Transformers::Format do
         }
       end
 
-      it "answers formatted string" do
+      it "formats text" do
         expect(transformer.call(attributes)).to eq(
           Success(
             text: "Test: A test. [A B]",
@@ -73,7 +87,7 @@ RSpec.describe Etcher::Transformers::Format do
         )
       end
 
-      it "answers formatted string while ignoring ancillary attributes" do
+      it "formats text with mappings ignored" do
         attributes[:text] = "%<prefix>s: %<message>s"
 
         expect(transformer.call(attributes)).to eq(

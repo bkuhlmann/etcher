@@ -8,9 +8,10 @@ module Etcher
     class Format
       include Dry::Monads[:result]
 
-      def initialize key, **pass_throughs
+      def initialize key, *retainers, **mappings
         @key = key
-        @pass_throughs = pass_throughs
+        @retainers = retainers
+        @mappings = mappings
         @pattern = /%<.+>s/o
       end
 
@@ -29,7 +30,13 @@ module Etcher
 
       private
 
-      attr_reader :key, :pass_throughs, :pattern
+      attr_reader :key, :retainers, :mappings, :pattern
+
+      def pass_throughs
+        retainers.each
+                 .with_object({}) { |key, expansions| expansions[key] = "%<#{key}>s" }
+                 .merge! mappings
+      end
     end
   end
 end
