@@ -1,5 +1,12 @@
 = Versions
 
+== 2.1.0 (2024-07-10)
+
+* 🟢 Added format transformer retainers - Brooke Kuhlmann
+* 🟢 Added format transformer spec for key with nil value - Brooke Kuhlmann
+* 🔼 Updated to Git Lint 8.0.0 - Brooke Kuhlmann
+* 🔼 Updated to Ruby 3.3.4 - Brooke Kuhlmann
+
 == 2.0.0 (2024-07-05)
 
 * ✅ Fixed resolver to catch all failure formats - Brooke Kuhlmann

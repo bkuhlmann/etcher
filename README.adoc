@@ -291,7 +291,22 @@ registry = Etcher::Registry[loaders: [MyLoader.new]]
 registry = Etcher::Registry.new.add_loader MyLoader.new
 ----
 
-There are a few guidelines to using them:
+You can also remove a previously added loader by index:
+
+[source,ruby]
+----
+registry = Etcher::Registry.new
+
+# Application
+registry.add_loader MyLoader.new
+
+# RSpec
+registry.remove_loader 0
+----
+
+The ability to remove a loader is especially handy in a testing environment where you might need to temporarily remove a loader or don't need a specific loader for testing purposes.
+
+There are a few guidelines to using loaders:
 
 * All loaders must respond to `#call` with no arguments.
 * All loaders must answer either a success with attributes (i.e. `Success attributes`) or a failure with details about the failure (i.e. `Failure step: :load, constant: MyLoader, payload: "My error message.`)
@@ -464,6 +479,21 @@ registry = Etcher::Registry[transformers: [MyTransformer]]
 registry = Etcher::Registry.new.add_transformer MyTransformer
 ----
 
+You can also remove a previously added transformer by index:
+
+[source,ruby]
+----
+registry = Etcher::Registry.new
+
+# Application
+registry.add_transformer MyTransformer
+
+# RSpec
+registry.remove_transformer 0
+----
+
+The ability to remove a transformer is especially handy in a testing environment where you might need to temporarily remove a transformer or don't need a specific transformer for testing purposes.
+
 The guidelines for using transformers are:
 
 * They can be initialized with whatever requirements you need.
@@ -574,7 +604,7 @@ transformer.call({demo: "defined"})
 
 ==== Format
 
-Use `Etcher::Transformers::Format` to transform any key's value by using the configuration's existing attributes to format the value of a specific key using the {string_formats_link} Specification. Example:
+Use `Etcher::Transformers::Format` to transform any key's value by using the configuration's existing attributes to format the value of a specific key using the {string_formats_link} Specification. To start, we'll use the same attributes for all examples:
 
 [source,ruby]
 ----
@@ -583,7 +613,12 @@ attributes = {
   project_name: "test",
   project_uri: "%<organization_uri>s/projects/%<project_name>s"
 }
+----
 
+Using the above `attributes`, you'll get a `Success` when all required keys exist:
+
+[source,ruby]
+----
 Etcher::Transformers::Format.new(:project_uri).call attributes
 # Success(
   {
@@ -592,9 +627,14 @@ Etcher::Transformers::Format.new(:project_uri).call attributes
     project_uri: "https://acme.io/projects/test"
   }
 )
+----
 
+When some required keys are missing, you'll get a `Failure`:
+
+[source,ruby]
+----
 attributes.delete :project_name
-transformer.call attributes
+Etcher::Transformers::Format.new(:project_uri).call attributes
 
 # Failure(
 #   {
@@ -605,6 +645,38 @@ transformer.call attributes
 # )
 ----
 
+You can partially transform a value using _retainers_ and/or _mappings_ for situations where you need to format a value while preserving and/or remapping string specifiers for delayed formatting. Here's an example using a _retainer_ which preserves the `:project_name`.
+
+[source,ruby]
+----
+Etcher::Transformers::Format.new(:project_uri, :project_name).call attributes
+
+# Success(
+#  {
+#      organization_uri: "https://acme.io",
+#      project_name: "test",
+#      project_uri: "https://acme.io/projects/%<project_name>s"
+#   }
+# )
+----
+
+Notice the `organization_uri` was formatted in the `project_uri` while the `project_name` was preserved. This allows you to format the `project_name` when you can supply the value later. Similarly, you can remap a string specifier. Example:
+
+[source,ruby]
+----
+Etcher::Transformers::Format.new(:project_uri, project_name: "%<id>s").call attributes
+
+# Success(
+#  {
+#      organization_uri: "https://acme.io",
+#      project_name: "test",
+#      project_uri: "https://acme.io/projects/%<id>s"
+#   }
+# )
+----
+
+Notice the `organization_uri` was formatted in the `project_uri` (same as before) while the `project_name` was remapped as `%<id>s`. As shown mentioned earlier, this allows you to _delay_ supplying the `id` when you might not have a value for it yet.
+
 You can also, safely, transform a value which _doesn't_ have string specifiers:
 
 [source,ruby]
@@ -613,7 +685,7 @@ Etcher::Transformers::Format.new(:version).call(version: "1.2.3")
 # Success({:version=>"1.2.3"})
 ----
 
-Normally, you'd get a "too many arguments for format string" warning but this transformer detects and immediate skips formatting when no string specifiers are detected. This is handy for situations where your configuration supports values which may or may not need formatting.
+Normally, you'd get a "too many arguments for format string" warning but this transformer detects and immediately skips formatting when no string specifiers are detected. This is handy for situations where your configuration supports values which may or may not need formatting.
 
 ==== Time
 
