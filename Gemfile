@@ -19,7 +19,6 @@ end
 
 group :test do
   gem "dry-schema", "~> 1.1"
-  gem "guard-rspec", "~> 4.7", require: false
   gem "rspec", "~> 3.13"
 end
 
