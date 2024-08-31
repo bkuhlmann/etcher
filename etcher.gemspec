@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.metadata = {
     "bug_tracker_uri" => "https://github.com/bkuhlmann/etcher/issues",
     "changelog_uri" => "https://alchemists.io/projects/etcher/versions",
-    "documentation_uri" => "https://alchemists.io/projects/etcher",
+    "homepage_uri" => "https://alchemists.io/projects/etcher",
     "funding_uri" => "https://github.com/sponsors/bkuhlmann",
     "label" => "Etcher",
     "rubygems_mfa_required" => "true",
