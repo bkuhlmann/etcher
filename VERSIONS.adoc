@@ -1,5 +1,11 @@
 = Versions
 
+== 2.5.0 (2024-10-28)
+
+* 🔼 Updated to Refinements 12.10.0 - Brooke Kuhlmann
+* 🔼 Updated to Versionaire 13.9.0 - Brooke Kuhlmann
+* 🔼 Updated to Zeitwerk 2.7.0 - Brooke Kuhlmann
+
 == 2.4.0 (2024-10-07)
 
 * 🔼 Updated to Refinements 12.9.0 - Brooke Kuhlmann
