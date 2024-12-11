@@ -7,6 +7,12 @@ RSpec.describe Etcher::Transformers::Basename do
 
   subject(:transformer) { described_class.new :project_name }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(transformer.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers name when key exists" do
       expect(transformer.call({project_name: "test"})).to eq(Success(project_name: "test"))

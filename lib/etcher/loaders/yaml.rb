@@ -17,6 +17,7 @@ module Etcher
         @path = path
         @fallback = fallback
         @logger = logger
+        freeze
       end
 
       def call

@@ -13,6 +13,7 @@ module Etcher
     def initialize registry = Registry.new, logger: LOGGER
       @builder = Builder.new registry
       @logger = logger
+      freeze
     end
 
     def call(**overrides)

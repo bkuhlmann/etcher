@@ -7,6 +7,12 @@ RSpec.describe Etcher::Builder do
 
   subject(:builder) { described_class.new }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(builder.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     let(:registry) { Etcher::Registry[contract:, model:] }
     let(:contract) { Dry::Schema.Params { required(:name).filled :string } }

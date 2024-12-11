@@ -15,6 +15,12 @@ RSpec.describe Etcher::Loaders::Environment do
     }
   end
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(loader.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers empty hash by default" do
       expect(loader.call).to eq(Success({}))

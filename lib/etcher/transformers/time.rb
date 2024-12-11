@@ -11,6 +11,7 @@ module Etcher
       def initialize key, fallback: ::Time.now.utc
         @key = key
         @fallback = fallback
+        freeze
       end
 
       def call attributes

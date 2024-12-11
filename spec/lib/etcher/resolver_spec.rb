@@ -10,6 +10,12 @@ RSpec.describe Etcher::Resolver do
   let(:registry) { Etcher::Registry.new }
   let(:logger) { instance_spy Cogger::Hub }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(resolver.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     let :contract do
       Dry::Schema.Params do

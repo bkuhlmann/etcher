@@ -12,6 +12,7 @@ module Etcher
       def initialize attributes = ENV, only: Core::EMPTY_ARRAY
         @attributes = attributes
         @only = Array only
+        freeze
       end
 
       def call = Success attributes.slice(*only).transform_keys(&:downcase)

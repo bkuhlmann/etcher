@@ -7,6 +7,12 @@ RSpec.describe Etcher::Transformers::Format do
 
   subject(:transformer) { described_class.new :uri }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(transformer.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     let :attributes do
       {

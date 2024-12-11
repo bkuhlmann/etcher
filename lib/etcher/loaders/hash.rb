@@ -10,6 +10,7 @@ module Etcher
 
       def initialize(**attributes)
         @attributes = attributes
+        freeze
       end
 
       def call = Success attributes

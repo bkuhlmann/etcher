@@ -13,6 +13,7 @@ module Etcher
 
     def initialize registry = Registry.new
       @registry = registry
+      freeze
     end
 
     def call(**overrides)

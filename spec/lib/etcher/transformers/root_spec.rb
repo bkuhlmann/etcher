@@ -7,6 +7,12 @@ RSpec.describe Etcher::Transformers::Root do
 
   subject(:transformer) { described_class.new :root }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(transformer.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers expanded path when key exists" do
       expect(transformer.call({root: "test"})).to eq(Success(root: Bundler.root.join("test")))

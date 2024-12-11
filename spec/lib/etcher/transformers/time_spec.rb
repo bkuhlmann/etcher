@@ -9,6 +9,12 @@ RSpec.describe Etcher::Transformers::Time do
 
   let(:at) { Time.now.utc }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(transformer.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers original attributes when key and value are present" do
       expect(transformer.call({loaded_at: at})).to eq(Success(loaded_at: at))

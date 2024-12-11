@@ -13,6 +13,7 @@ module Etcher
         @retainers = retainers
         @mappings = mappings
         @pattern = /%<.+>s/o
+        freeze
       end
 
       def call attributes

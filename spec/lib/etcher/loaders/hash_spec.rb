@@ -7,6 +7,12 @@ RSpec.describe Etcher::Loaders::Hash do
 
   subject(:loader) { described_class.new }
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(loader.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers empty hash by default" do
       expect(loader.call).to eq(Success({}))

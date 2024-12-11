@@ -14,6 +14,12 @@ RSpec.describe Etcher::Loaders::YAML do
   include_context "with application dependencies"
   include_context "with temporary directory"
 
+  describe "#initialize" do
+    it "is frozen" do
+      expect(loader.frozen?).to be(true)
+    end
+  end
+
   describe "#call" do
     it "answers hash when valid" do
       path.write "name: test"

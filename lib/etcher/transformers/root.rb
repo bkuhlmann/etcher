@@ -14,6 +14,7 @@ module Etcher
       def initialize key, fallback: Pathname.pwd
         @key = key
         @fallback = fallback
+        freeze
       end
 
       def call attributes
