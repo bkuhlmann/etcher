@@ -45,5 +45,8 @@ RSpec.configure do |config|
     mocks.verify_partial_doubles = true
   end
 
-  config.before(:suite) { Dry::Schema.load_extensions :monads }
+  config.before :suite do
+    Dry::Monads.load_extensions :rspec
+    Dry::Schema.load_extensions :monads
+  end
 end

@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Builder do
-  include Dry::Monads[:result]
-
   subject(:builder) { described_class.new }
 
   describe "#initialize" do
@@ -19,7 +17,7 @@ RSpec.describe Etcher::Builder do
     let(:model) { Data.define :name }
 
     it "answers empty hash by default" do
-      expect(builder.call).to eq(Success({}))
+      expect(builder.call).to be_success({})
     end
 
     it "answers frozen hash by default" do
@@ -32,7 +30,7 @@ RSpec.describe Etcher::Builder do
       registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/two.yaml")
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Success(name: "two"))
+      expect(builder.call).to be_success(name: "two")
     end
 
     it "answers last nested loader key with multiple loaders" do
@@ -41,7 +39,7 @@ RSpec.describe Etcher::Builder do
       registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Success(test_name: "four"))
+      expect(builder.call).to be_success(test_name: "four")
     end
 
     it "answers mixed keys with multiple loaders" do
@@ -50,7 +48,7 @@ RSpec.describe Etcher::Builder do
       registry.add_loader :yaml, SPEC_ROOT.join("support/fixtures/four.yaml")
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Success(name: "one", test_name: "four"))
+      expect(builder.call).to be_success(name: "one", test_name: "four")
     end
 
     it "answers last loader key with multiple loaders and overrides" do
@@ -60,7 +58,7 @@ RSpec.describe Etcher::Builder do
       builder = described_class.new registry
       result = builder.call test_name: "one", other: "two"
 
-      expect(result).to eq(Success({test_name: "one", other: "two"}))
+      expect(result).to be_success({test_name: "one", other: "two"})
     end
 
     it "fails to load" do
@@ -68,7 +66,7 @@ RSpec.describe Etcher::Builder do
       registry.add_loader proc { Failure "Danger!" }
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Failure("Danger!"))
+      expect(builder.call).to be_failure("Danger!")
     end
 
     it "fails to transform" do
@@ -76,24 +74,26 @@ RSpec.describe Etcher::Builder do
       registry.add_transformer(proc { Failure "Danger!" })
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Failure("Danger!"))
+      expect(builder.call).to be_failure("Danger!")
     end
 
     it "answers symbol overrides" do
       attributes = {name: "test", label: "Test"}
-      expect(builder.call(**attributes)).to eq(Success(attributes))
+      expect(builder.call(**attributes)).to be_success(attributes)
     end
 
     it "answers string overrides" do
       attributes = {"name" => "test", "label" => "Test"}
-      expect(builder.call(**attributes)).to eq(Success(name: "test", label: "Test"))
+      expect(builder.call(**attributes)).to be_success(name: "test", label: "Test")
     end
 
     it "answers contract failure with invalid overrides" do
       builder = described_class.new registry
 
-      expect(builder.call(label: "Test")).to eq(
-        Failure(step: :validate, constant: described_class, payload: {name: ["is missing"]})
+      expect(builder.call(label: "Test")).to be_failure(
+        step: :validate,
+        constant: described_class,
+        payload: {name: ["is missing"]}
       )
     end
 
@@ -102,7 +102,7 @@ RSpec.describe Etcher::Builder do
       registry = Etcher::Registry[model:]
       builder = described_class.new registry
 
-      expect(builder.call(name: "test")).to eq(Success(model[name: "test"]))
+      expect(builder.call(name: "test")).to be_success(model[name: "test"])
     end
 
     it "answers Data argument failure" do
@@ -119,15 +119,17 @@ RSpec.describe Etcher::Builder do
       registry = Etcher::Registry[model:]
       builder = described_class.new registry
 
-      expect(builder.call(name: "test")).to eq(Success(model[name: "test"]))
+      expect(builder.call(name: "test")).to be_success(model[name: "test"])
     end
 
     it "answers Struct argument failure" do
       registry = Etcher::Registry[model: Struct.new(:other)]
       builder = described_class.new registry
 
-      expect(builder.call(name: "test")).to eq(
-        Failure(step: :model, constant: described_class, payload: "Unknown keywords: name.")
+      expect(builder.call(name: "test")).to be_failure(
+        step: :model,
+        constant: described_class,
+        payload: "Unknown keywords: name."
       )
     end
 
@@ -138,7 +140,7 @@ RSpec.describe Etcher::Builder do
       registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
       builder = described_class.new registry
 
-      expect(builder.call).to eq(Success(model[name: "ONE!"]))
+      expect(builder.call).to be_success(model[name: "ONE!"])
     end
 
     it "answers record for custom loaders, transforms, overrides, contract, and model" do
@@ -148,7 +150,7 @@ RSpec.describe Etcher::Builder do
       registry.add_transformer(-> pairs { Success pairs.merge!(name: "#{pairs[:name]}!") })
       builder = described_class.new registry
 
-      expect(builder.call(name: "test")).to eq(Success(model[name: "test"]))
+      expect(builder.call(name: "test")).to be_success(model[name: "test"])
     end
   end
 end

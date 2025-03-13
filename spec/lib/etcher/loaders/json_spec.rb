@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Loaders::JSON do
-  include Dry::Monads[:result]
-
   using Refinements::Pathname
 
   subject(:loader) { described_class.new path, logger: }
@@ -23,7 +21,7 @@ RSpec.describe Etcher::Loaders::JSON do
   describe "#call" do
     it "answers hash when valid" do
       path.write({name: "test"}.to_json)
-      expect(loader.call).to eq(Success("name" => "test"))
+      expect(loader.call).to be_success("name" => "test")
     end
 
     it "logs nil path" do
@@ -43,36 +41,30 @@ RSpec.describe Etcher::Loaders::JSON do
     it "fails with nil content" do
       path.touch
 
-      expect(loader.call).to eq(
-        Failure(
-          step: :load,
-          constant: described_class,
-          payload: "File is empty: #{path.to_s.inspect}."
-        )
+      expect(loader.call).to be_failure(
+        step: :load,
+        constant: described_class,
+        payload: "File is empty: #{path.to_s.inspect}."
       )
     end
 
     it "fails with empty content" do
       path.write "\n"
 
-      expect(loader.call).to eq(
-        Failure(
-          step: :load,
-          constant: described_class,
-          payload: "File is empty: #{path.to_s.inspect}."
-        )
+      expect(loader.call).to be_failure(
+        step: :load,
+        constant: described_class,
+        payload: "File is empty: #{path.to_s.inspect}."
       )
     end
 
     it "fails with invalid content" do
       path.write "Danger!"
 
-      expect(loader.call).to eq(
-        Failure(
-          step: :load,
-          constant: described_class,
-          payload: %(Invalid content: "Danger!". Path: #{path.to_s.inspect}.)
-        )
+      expect(loader.call).to be_failure(
+        step: :load,
+        constant: described_class,
+        payload: %(Invalid content: "Danger!". Path: #{path.to_s.inspect}.)
       )
     end
   end

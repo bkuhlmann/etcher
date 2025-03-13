@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Contract do
-  include Dry::Monads[:result]
-
   subject(:contract) { described_class }
 
   describe "#call" do
@@ -20,7 +18,7 @@ RSpec.describe Etcher::Contract do
     end
 
     it "can be cast as a monad" do
-      expect(contract.call(attributes).to_monad).to eq(Success(name: "test"))
+      expect(contract.call(attributes).to_monad).to be_success(name: "test")
     end
   end
 end

@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Transformers::Time do
-  include Dry::Monads[:result]
-
   subject(:transformer) { described_class.new :loaded_at, fallback: at }
 
   let(:at) { Time.now.utc }
@@ -17,11 +15,11 @@ RSpec.describe Etcher::Transformers::Time do
 
   describe "#call" do
     it "answers original attributes when key and value are present" do
-      expect(transformer.call({loaded_at: at})).to eq(Success(loaded_at: at))
+      expect(transformer.call({loaded_at: at})).to be_success(loaded_at: at)
     end
 
     it "answers fallback when attributes are empty" do
-      expect(transformer.call({})).to eq(Success(loaded_at: at))
+      expect(transformer.call({})).to be_success(loaded_at: at)
     end
 
     it "answers fallback without attributes or custom time" do
@@ -31,7 +29,7 @@ RSpec.describe Etcher::Transformers::Time do
 
     it "answers custom key and fallback when attributes are empty" do
       transformer = described_class.new :now, fallback: at
-      expect(transformer.call({})).to eq(Success(now: at))
+      expect(transformer.call({})).to be_success(now: at)
     end
   end
 end

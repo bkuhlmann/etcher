@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Loaders::Environment do
-  include Dry::Monads[:result]
-
   subject(:loader) { described_class.new attributes }
 
   let :attributes do
@@ -23,24 +21,24 @@ RSpec.describe Etcher::Loaders::Environment do
 
   describe "#call" do
     it "answers empty hash by default" do
-      expect(loader.call).to eq(Success({}))
+      expect(loader.call).to be_success({})
     end
 
     it "answers filtered, empty hash with no matches" do
       loader = described_class.new attributes, only: "user"
-      expect(loader.call).to eq(Success({}))
+      expect(loader.call).to be_success({})
     end
 
     it "answers filtered hash with matches" do
       loader = described_class.new attributes, only: %w[HOME USER]
-      expect(loader.call).to eq(Success("home" => "/Users/test", "user" => "test"))
+      expect(loader.call).to be_success("home" => "/Users/test", "user" => "test")
     end
 
     it "answers filtered, downcased hash with matches" do
       loader = described_class.new attributes, only: %w[HOME RACK_ENV USER]
 
-      expect(loader.call).to eq(
-        Success("home" => "/Users/test", "rack_env" => "test", "user" => "test")
+      expect(loader.call).to be_success(
+        "home" => "/Users/test", "rack_env" => "test", "user" => "test"
       )
     end
   end

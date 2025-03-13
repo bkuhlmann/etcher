@@ -3,8 +3,6 @@
 require "spec_helper"
 
 RSpec.describe Etcher::Resolver do
-  include Dry::Monads[:result]
-
   subject(:resolver) { described_class.new registry, logger: }
 
   let(:registry) { Etcher::Registry.new }
