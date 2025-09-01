@@ -27,7 +27,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "core", "~> 2.0"
   spec.add_dependency "dry-monads", "~> 1.9"
   spec.add_dependency "dry-types", "~> 1.7"
-  spec.add_dependency "refinements", "~> 13.3"
+  spec.add_dependency "refinements", "~> 13.5"
   spec.add_dependency "versionaire", "~> 14.0"
   spec.add_dependency "zeitwerk", "~> 2.7"
 
