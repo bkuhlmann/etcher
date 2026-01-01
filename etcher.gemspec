@@ -26,7 +26,7 @@ Gem::Specification.new do |spec|
   spec.add_dependency "cogger", "~> 2.0"
   spec.add_dependency "core", "~> 3.0"
   spec.add_dependency "dry-monads", "~> 1.9"
-  spec.add_dependency "dry-types", "~> 1.7"
+  spec.add_dependency "dry-types", "~> 1.8"
   spec.add_dependency "refinements", "~> 14.0"
   spec.add_dependency "versionaire", "~> 15.0"
   spec.add_dependency "zeitwerk", "~> 2.7"
