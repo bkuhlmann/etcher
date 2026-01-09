@@ -18,7 +18,7 @@ group :development do
 end
 
 group :test do
-  gem "dry-schema", "~> 1.14"
+  gem "dry-schema", "~> 1.15"
   gem "rspec", "~> 3.13"
 end
 
