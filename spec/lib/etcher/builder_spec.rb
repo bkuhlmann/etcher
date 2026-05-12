@@ -110,7 +110,7 @@ RSpec.describe Etcher::Builder do
       builder = described_class.new registry
 
       expect(builder.call(name: "test")).to eq(
-        Failure(step: :model, constant: described_class, payload: "Unknown keyword: :name.")
+        Failure(step: :model, constant: described_class, payload: "Missing keyword: :other.")
       )
     end
 
