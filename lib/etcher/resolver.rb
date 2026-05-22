@@ -2,6 +2,7 @@
 
 require "dry/monads"
 require "refinements/array"
+require "refinements/hash"
 
 module Etcher
   # Builds and fully resolves a configuration.
@@ -9,6 +10,19 @@ module Etcher
     include Dry::Monads[:result]
 
     using Refinements::Array
+    using Refinements::Hash
+
+    def self.flatten errors, lines = []
+      errors.each do |key, value|
+        if value.is_a? Hash
+          flatten value.flatten_keys(prefix: key, delimiter: "."), lines
+        else
+          lines.append "  - #{key} #{value.to_sentence}\n"
+        end
+      end
+
+      lines
+    end
 
     def initialize registry = Registry.new, logger: LOGGER
       @builder = Builder.new registry
@@ -33,11 +47,10 @@ module Etcher
     attr_reader :builder, :logger
 
     def log_and_abort step, constant, errors
-      details = errors.map { |key, message| "  - #{key} #{message.to_sentence}\n" }
-                      .join
+      lines = self.class.flatten errors
 
       logger.abort "#{step.capitalize} failure (#{constant}). " \
-                   "Unable to load configuration:\n#{details}"
+                   "Unable to load configuration:\n#{lines.join}"
     end
   end
 end

@@ -19,6 +19,10 @@ RSpec.describe Etcher::Resolver do
       Dry::Schema.Params do
         required(:name).filled :string
         required(:label).filled :string
+        required(:bag).filled(:array).each(:hash) do
+          required(:token).filled :string
+          required(:items).filled(:array).each(:hash) { required(:text).filled :string }
+        end
       end
     end
 
@@ -52,16 +56,18 @@ RSpec.describe Etcher::Resolver do
       end
     end
 
-    context "with contract failure" do
+    context "with contract nested results failure" do
       let(:registry) { Etcher::Registry[contract:] }
 
       it "logs and aborts" do
-        resolver.call
+        resolver.call bag: [{}]
 
         expect(logger).to have_received(:abort).with(
           "Validate failure (Etcher::Builder). Unable to load configuration:\n  " \
           "- name is missing\n  " \
-          "- label is missing\n"
+          "- label is missing\n  " \
+          "- bag.0.token is missing\n  " \
+          "- bag.0.items is missing\n"
         )
       end
     end
@@ -70,10 +76,10 @@ RSpec.describe Etcher::Resolver do
       let(:registry) { Etcher::Registry[contract:, model: Data.define] }
 
       it "logs and aborts" do
-        resolver.call name: "test", label: "Test"
+        resolver.call name: "test", label: "Test", bag: [{token: "one", items: [{text: "test"}]}]
 
         expect(logger).to have_received(:abort).with(
-          "Model failure (Etcher::Builder). Unknown keywords: :name, :label."
+          "Model failure (Etcher::Builder). Unknown keywords: :name, :label, :bag."
         )
       end
     end
