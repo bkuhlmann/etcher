@@ -16,7 +16,7 @@ module Etcher
       freeze
     end
 
-    def call(**overrides)
+    def call **overrides
       load.bind { |attributes| transform attributes }
           .fmap { |attributes| attributes.merge! overrides.symbolize_keys! }
           .bind { |attributes| validate attributes }
@@ -54,7 +54,7 @@ module Etcher
       Failure step: __method__, constant: self.class, payload: "#{error.message.capitalize}."
     end
 
-    def merge(*items)
+    def merge *items
       case items
         in Success(all), Success(subset) then Success(all.merge!(subset))
         else items.last

@@ -30,7 +30,7 @@ module Etcher
       freeze
     end
 
-    def call(**overrides)
+    def call **overrides
       case builder.call(**overrides)
         in Success(attributes) then attributes
         in Failure(step:, constant:, payload: String => payload)

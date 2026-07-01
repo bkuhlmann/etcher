@@ -8,7 +8,7 @@ module Etcher
     class Hash
       include Dry::Monads[:result]
 
-      def initialize(**attributes)
+      def initialize **attributes
         @attributes = attributes
         freeze
       end
