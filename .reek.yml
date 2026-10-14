@@ -3,6 +3,8 @@ exclude_paths:
   - vendor
 
 detectors:
+  LongParameterList:
+    enabled: false
   ModuleInitialize:
     exclude:
       - Etcher
@@ -13,3 +15,5 @@ detectors:
   TooManyStatements:
     exclude:
       - Etcher::Loaders::YAML#call
+  UnusedParameters:
+    enabled: false
